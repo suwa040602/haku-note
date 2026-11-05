@@ -531,7 +531,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 10;
+const APP_VERSION = 'v1.3', APP_BUILD = 11;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -803,6 +803,14 @@ async function takeSharedPdf() {
     S.tab = 'today'; render();
     await onPdfChosen(new File([await res.blob()], name, { type: 'application/pdf' }));
   } catch (e) { console.error(e); alert('共有されたPDFを読み込めませんでした\n' + e.message); }
+}
+/* 容量不足のときなどにブラウザがデータを自動で消さないよう頼む（画面には何も出ない） */
+let persisted = null;
+async function keepData() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) return;
+    persisted = await navigator.storage.persisted() || await navigator.storage.persist();
+  } catch (e) { }
 }
 /* 最終日から8週（56日）以上たったシフトは起動時に自動で消す */
 const KEEP_DAYS = 56;
@@ -1168,7 +1176,7 @@ const SHEETS = {
         <h3>取り込み済みのシフト</h3>
         <div class="card">${weeks.map(w => `<div class="rrow"><div class="grow" data-act="weekView" data-w="${w.weekStart}"><b>${w.weekStart.slice(5).replace('-', '/')} の週</b><div class="xs muted">${w.staff.length}人・${esc(w.fileName || '')}</div></div><button class="btn sm danger" data-act="delWeek" data-w="${w.weekStart}">削除</button></div>`).join('') || '<div class="empty small">なし</div>'}</div>
         <p class="xs muted">最終日から8週間たったシフトは自動で削除されます。</p>
-        <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます</p>`
+        <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます${persisted ? '（自動削除されない設定）' : ''}</p>`
     };
   },
   editCourse(sh) {
@@ -1488,6 +1496,7 @@ $('#main').addEventListener('touchend', e => {
   await DB.open();
   await loadAll();
   await pruneOldShifts();
+  keepData();
   render();
   setInterval(tick, 1000);
   takeSharedPdf();
