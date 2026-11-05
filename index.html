@@ -70,6 +70,8 @@ label.f>input,label.f>select,label.f>textarea{margin-top:4px;color:var(--ink);fo
 .shift:last-child{border-bottom:0}
 .shift .t{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;font-size:16px}
 .shift .n{flex:1;min-width:0}
+.nextme{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;margin-bottom:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.nextme .grow{flex:1;font-variant-numeric:tabular-nums}
 .shift .n b{font-weight:600}
 .shift.me{background:var(--gold-soft)}
 .shift.me .n b{color:var(--gold)}
@@ -529,7 +531,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 9;
+const APP_VERSION = 'v1.3', APP_BUILD = 10;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -707,6 +709,31 @@ function shiftsOn(dateStr) {
 }
 // 所属は「彦根」「トキシラズ」「草津」のように末尾の「店」を省いて表示する
 const deptLabel = d => String(d).replace(/^箔\s*/, '').replace(/店$/, '');
+function nextMyShift() {
+  if (!S.kv.myName) return null;
+  const today = ymd(new Date());
+  const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const dates = [...new Set(S.shifts.flatMap(w => w.dates || []))].filter(d => d >= today).sort();
+  for (const d of dates) {
+    const w = weekFor(d); if (!w) continue;
+    const me = w.staff.find(s => isMe(s.name) && s.shifts[d]);
+    if (!me) continue;
+    const sh = me.shifts[d];
+    if (d === today && nowMin >= (sh.end ?? sh.start + 1)) continue; // 今日の分はもう終わった
+    return { date: d, ...sh, working: d === today && nowMin >= sh.start };
+  }
+  return null;
+}
+function nextShiftCard() {
+  if (!S.kv.myName || !S.shifts.length) return '';
+  const n = nextMyShift();
+  if (!n) return `<div class="card nextme"><span class="small muted">次の出勤</span><span class="small muted">取り込み済みのシフトにはありません</span></div>`;
+  const d = parseYmd(n.date), days = Math.round((d - parseYmd(ymd(new Date()))) / 864e5);
+  const rel = n.working ? '勤務中' : days === 0 ? '今日' : days === 1 ? '明日' : days === 2 ? 'あさって' : `${days}日後`;
+  return `<button class="card nextme" data-act="gotoDay" data-d="${n.date}"><span class="small muted">次の出勤</span>
+    <span class="grow"><b>${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）</b> ${fmtMin(n.start)}〜${n.end != null ? fmtMin(n.end) : '?'}</span>
+    <span class="badge gold">${rel}</span></button>`;
+}
 const isMe = name => S.kv.myName && norm(name) === norm(S.kv.myName);
 function viewToday() {
   const d = parseYmd(S.day);
@@ -730,7 +757,7 @@ function viewToday() {
     }).join('')}</div>
     <p class="xs muted">${r.rows.length}人 ・ ${esc(r.week.fileName || '')} を ${new Date(r.week.importedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} に取り込み ・ <button class="link" data-act="weekView" data-w="${r.week.weekStart}">週の一覧</button></p>`;
   }
-  return `<div class="datebar" id="swipe">
+  return `${nextShiftCard()}<div class="datebar" id="swipe">
       <button class="navb" data-act="day" data-d="-1" aria-label="前日">◀</button>
       <div class="d"><b>${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）</b><span class="small muted">${rel || `<button class="link" data-act="dayToday">今日に戻る</button>`}</span></div>
       <button class="navb" data-act="day" data-d="1" aria-label="翌日">▶</button></div>
@@ -762,6 +789,29 @@ async function onPdfChosen(file) {
     const r = await importPdf(buf, file.name);
     pushSheet({ type: 'shiftPreview', ...r });
   } catch (e) { console.error(e); alert('PDFの読み込みに失敗しました\n' + e.message); }
+}
+
+async function takeSharedPdf() {
+  if (!/[?&]shared=1/.test(location.search)) return;
+  history.replaceState(history.state, '', location.pathname);
+  try {
+    const c = await caches.open('haku-share');
+    const res = await c.match('./shared-pdf');
+    if (!res) return;
+    await c.delete('./shared-pdf');
+    const name = decodeURIComponent(res.headers.get('X-Name') || 'shift.pdf');
+    S.tab = 'today'; render();
+    await onPdfChosen(new File([await res.blob()], name, { type: 'application/pdf' }));
+  } catch (e) { console.error(e); alert('共有されたPDFを読み込めませんでした\n' + e.message); }
+}
+/* 最終日から8週（56日）以上たったシフトは起動時に自動で消す */
+const KEEP_DAYS = 56;
+async function pruneOldShifts() {
+  const lim = new Date(); lim.setHours(0, 0, 0, 0); lim.setDate(lim.getDate() - KEEP_DAYS);
+  const limStr = ymd(lim);
+  const old = S.shifts.filter(w => { const last = [...(w.dates || [])].sort().pop() || w.weekStart; return last < limStr; });
+  for (const w of old) await DB.del('shifts', w.weekStart);
+  if (old.length) S.shifts = S.shifts.filter(w => !old.includes(w));
 }
 
 /* ========== 進行（卓） ========== */
@@ -1117,6 +1167,7 @@ const SHEETS = {
         <button class="btn block mt" data-act="pickJson" data-mode="restore">バックアップから復元</button>
         <h3>取り込み済みのシフト</h3>
         <div class="card">${weeks.map(w => `<div class="rrow"><div class="grow" data-act="weekView" data-w="${w.weekStart}"><b>${w.weekStart.slice(5).replace('-', '/')} の週</b><div class="xs muted">${w.staff.length}人・${esc(w.fileName || '')}</div></div><button class="btn sm danger" data-act="delWeek" data-w="${w.weekStart}">削除</button></div>`).join('') || '<div class="empty small">なし</div>'}</div>
+        <p class="xs muted">最終日から8週間たったシフトは自動で削除されます。</p>
         <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます</p>`
     };
   },
@@ -1238,6 +1289,7 @@ const A = {
   back: () => closeSheet(),
   openSettings: () => pushSheet({ type: 'settings' }),
   day: el => { const d = parseYmd(S.day); d.setDate(d.getDate() + +el.dataset.d); S.day = ymd(d); render(); },
+  gotoDay: el => { S.day = el.dataset.d; render(); },
   dayToday: () => { S.day = ymd(new Date()); render(); },
   pickPdf: () => { $('#pdfIn').value = ''; $('#pdfIn').click(); },
   weekView: el => pushSheet({ type: 'week', w: el.dataset.w }),
@@ -1435,8 +1487,10 @@ $('#main').addEventListener('touchend', e => {
 (async () => {
   await DB.open();
   await loadAll();
+  await pruneOldShifts();
   render();
   setInterval(tick, 1000);
+  takeSharedPdf();
   updateWakeLock();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
 })();
