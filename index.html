@@ -531,7 +531,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 11;
+const APP_VERSION = 'v1.3', APP_BUILD = 12;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -586,6 +586,7 @@ const S = {
 async function loadAll() {
   [S.recipes, S.courses, S.tables, S.shifts] = await Promise.all(['recipes', 'courses', 'tables', 'shifts'].map(DB.all));
   for (const { k, v } of await DB.all('kv')) S.kv[k] = v;
+  for (const c of S.courses) if (migrateCourse(c)) await DB.put('courses', c);
 }
 const setKv = (k, v) => { S.kv[k] = v; return DB.put('kv', { k, v }); };
 const recipeById = id => S.recipes.find(r => r.id === id);
@@ -827,6 +828,17 @@ const pausedExtra = (t, now = Date.now()) => t.pausedAt ? (now - t.pausedAt) / 6
 const itemDue = (t, i, now) => t.startAt + (t.items[i].offsetMin + t.shiftMin + pausedExtra(t, now)) * 60000;
 const loAt = t => t.startAt + t.lastOrderMin * 60000;
 const endAt = t => t.startAt + t.durationMin * 60000;
+/* 料理を出し切る時間（開始からの分）。既定は100分。LO（105分）とは別 */
+const SERVE_BY = 100;
+const serveByOf = x => +x.serveByMin || SERVE_BY;
+const serveAt = t => t.startAt + serveByOf(t) * 60000;
+/* 出し切り時間がなかった頃のコースは、それより後の品目を出し切り時間に合わせる */
+function migrateCourse(c) {
+  if (c.serveByMin) return false;
+  c.serveByMin = SERVE_BY;
+  for (const it of c.items || []) if (!it.afterCourse && it.offsetMin != null && it.offsetMin > SERVE_BY) it.offsetMin = SERVE_BY;
+  return true;
+}
 const timed = (t, i) => !t.items[i].afterCourse && t.items[i].offsetMin != null;
 function nextItem(t, now = Date.now()) {
   let best = -1;
@@ -837,7 +849,7 @@ function nextItem(t, now = Date.now()) {
   return best;
 }
 function overLO(t, now = Date.now()) {
-  return t.items.some((it, i) => timed(t, i) && !t.served[i] && itemDue(t, i, now) > loAt(t) + 30000);
+  return t.items.some((it, i) => timed(t, i) && !t.served[i] && itemDue(t, i, now) > serveAt(t) + 30000);
 }
 function cdStr(ms) {
   const neg = ms < 0; ms = Math.abs(ms);
@@ -873,7 +885,7 @@ function viewProgress() {
     const lo = loAt(t) - now, end = endAt(t) - now;
     return `<div class="card tcard ${due ? 'due' : ''}" data-act="openTable" data-t="${t.id}">
       <div class="hd"><span class="no">${esc(t.no)}</span><span class="grow"><b>${esc(t.courseName)}</b> <span class="muted small">${t.people}名</span>
-        ${t.pausedAt ? '<span class="badge red">一時停止</span>' : ''}${overLO(t, now) ? '<span class="badge red">LO超過見込み</span>' : ''}${t.shiftMin >= 1 ? `<span class="badge">+${Math.round(t.shiftMin)}分</span>` : ''}</span>
+        ${t.pausedAt ? '<span class="badge red">一時停止</span>' : ''}${overLO(t, now) ? `<span class="badge red">${serveByOf(t)}分超過見込み</span>` : ''}${t.shiftMin >= 1 ? `<span class="badge">+${Math.round(t.shiftMin)}分</span>` : ''}</span>
         <span class="small muted">${end < 0 ? '<span class="badge red">終了時刻</span>' : lo > 0 ? `LOまで${Math.ceil(lo / 60000)}分` : `LO済・終了まで${Math.ceil(end / 60000)}分`}</span></div>
       ${next}
       <div class="bar"><i style="width:${pct}%"></i><b style="left:${t.lastOrderMin / t.durationMin * 100}%"></b></div>
@@ -1105,10 +1117,10 @@ const SHEETS = {
       }
       const due = itemDue(t, i, now);
       const over = !served && due <= now;
-      const late = !served && due > lo + 30000;
+      const late = !served && due > serveAt(t) + 30000;
       return `<div class="item ${served ? 'done' : ''} ${over ? 'over' : ''}"><span class="tm">${served ? hm(served) : hm(due)}</span>
         <span class="grow nm" ${it.recipeRef ? `data-act="tableRecipe" data-t="${t.id}" data-i="${i}"` : ''}>${esc(it.name)} ${it.recipeRef ? '<span class="link xs">レシピ</span>' : ''}
-          <div class="xs muted">${served ? '提供済み' : t.pausedAt ? '一時停止中' : over ? `<b style="color:var(--red)">${cdStr(due - now)} 超過</b>` : `あと ${cdStr(due - now)}`} ・ ${it.offsetMin}分${late ? ' <span class="badge red">LOを過ぎます</span>' : ''}</div></span>
+          <div class="xs muted">${served ? '提供済み' : t.pausedAt ? '一時停止中' : over ? `<b style="color:var(--red)">${cdStr(due - now)} 超過</b>` : `あと ${cdStr(due - now)}`} ・ ${it.offsetMin}分${late ? ` <span class="badge red">${serveByOf(t)}分を過ぎます</span>` : ''}</div></span>
         <button class="chk ${served ? 'on' : ''}" data-act="serve" data-t="${t.id}" data-i="${i}" aria-label="提供済">${ICON_CHECK}</button></div>`;
     }).join('');
     return {
@@ -1116,7 +1128,7 @@ const SHEETS = {
       body: `<div class="card sec"><div class="row"><div class="grow"><div class="small muted">開始 ${hm(t.startAt)} ・ 経過 ${Math.floor((now - t.startAt) / 60000)}分</div>
           <div><b>LO ${hm(lo)}</b> <span class="muted small">${lo > now ? `あと${Math.ceil((lo - now) / 60000)}分` : '済'}</span> ・ 終了 ${hm(endAt(t))}</div></div>
           <div class="stepper"><button data-act="tblPpl" data-t="${t.id}" data-d="-1">−</button><span class="v">${t.people}<span class="small">名</span></span><button data-act="tblPpl" data-t="${t.id}" data-d="1">＋</button></div></div>
-          ${overLO(t, now) ? '<div class="warn">ずらしにより最後の料理がLO（105分）を過ぎます。LOと終了時刻は動きません</div>' : ''}
+          ${overLO(t, now) ? `<div class="warn">ずらしにより、料理を出し切る時間（${serveByOf(t)}分）を過ぎます。LOと終了時刻は動きません</div>` : ''}
           <div class="row wrap mt">
             <button class="btn sm" data-act="shift" data-t="${t.id}" data-d="-5">−5分</button>
             <button class="btn sm" data-act="shift" data-t="${t.id}" data-d="5">＋5分</button>
@@ -1187,6 +1199,7 @@ const SHEETS = {
       right: `<button class="btn sm" data-act="saveCourse">保存</button>`,
       body: `<label class="f">コース名<input type="text" id="c_name" value="${esc(c.name)}"></label>
         <div class="row"><label class="f grow">LO（開始から分）<input type="number" id="c_lo" value="${c.lastOrderMin}"></label><label class="f grow">コース時間（分）<input type="number" id="c_dur" value="${c.durationMin}"></label></div>
+        <label class="f">料理を出し切る時間（開始から分）<input type="number" id="c_srv" value="${serveByOf(c)}"></label>
         <h3>品目（メニュー表の順）</h3>
         ${c.items.map((it, i) => `<div class="edrow" data-ci="${i}">
           <input type="text" class="c_iname" value="${esc(it.name)}" placeholder="品目名">
@@ -1195,7 +1208,7 @@ const SHEETS = {
           <div class="row" style="margin-top:6px"><label class="small row"><input type="checkbox" class="c_iafter" ${it.afterCourse ? 'checked' : ''}> 甘味（LO後・タイマーなし）</label><span class="grow"></span>
             <button class="btn sm" data-act="ciUp" data-i="${i}">↑</button><button class="btn sm danger" data-act="ciDel" data-i="${i}">削除</button></div></div>`).join('')}
         <button class="btn block mt" data-act="ciAdd">＋ 品目を追加</button>
-        <p class="xs muted">最後の料理はLO（${c.lastOrderMin}分）に合わせると、LOの通知と同時に知らせます。</p>
+        <p class="xs muted">料理は${serveByOf(c)}分までにすべて出します。これより後に設定した品目や、ずらしで遅れた品目には警告が出ます。</p>
         ${sh.isNew ? '' : '<button class="btn block danger mt2" data-act="delCourse">このコースを削除</button>'}`
     };
   },
@@ -1224,6 +1237,7 @@ function collectCourse(sh) {
   c.name = $('#c_name').value.trim();
   c.lastOrderMin = +$('#c_lo').value || 105;
   c.durationMin = +$('#c_dur').value || 120;
+  c.serveByMin = +$('#c_srv').value || SERVE_BY;
   c.items = [...document.querySelectorAll('[data-ci]')].map(el => {
     const after = el.querySelector('.c_iafter').checked;
     const off = el.querySelector('.c_ioff').value;
@@ -1243,11 +1257,13 @@ function normRecipe(r) {
   };
 }
 function normCourse(c) {
-  return {
+  const n = {
     id: String(c.id || uid('c')), name: String(c.name || '無題'), price: c.price || null,
     items: (c.items || []).map(it => ({ name: String(it.name || ''), recipeRef: it.recipeRef || null, offsetMin: it.afterCourse || it.offsetMin == null ? null : +it.offsetMin, afterCourse: it.afterCourse ? true : undefined })),
-    durationMin: +c.durationMin || 120, lastOrderMin: +c.lastOrderMin || 105,
+    durationMin: +c.durationMin || 120, lastOrderMin: +c.lastOrderMin || 105, serveByMin: +c.serveByMin || undefined,
   };
+  migrateCourse(n); // 出し切り時間のない古いデータ（recipes_import.json など）は100分に合わせる
+  return n;
 }
 async function importJson(obj, mode) {
   if (mode === 'restore') {
@@ -1339,7 +1355,7 @@ const A = {
     }
     const t = {
       id: uid('t'), no: $('#t_no').value.trim() || '?', courseId: c.id, courseName: c.name, people: sh.draft.people, startAt,
-      items: c.items.map(it => ({ ...it })), durationMin: c.durationMin, lastOrderMin: c.lastOrderMin,
+      items: c.items.map(it => ({ ...it })), durationMin: c.durationMin, lastOrderMin: c.lastOrderMin, serveByMin: serveByOf(c),
       shiftMin: 0, pausedAt: null, served: {}, notified: {}, createdAt: Date.now(),
     };
     // 過去の開始時刻なら、すでに過ぎた通知は鳴らさない
