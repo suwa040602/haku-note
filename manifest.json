@@ -1,15 +1,17 @@
 {
-  "name": "箔ノート",
-  "short_name": "箔ノート",
+  "name": "箔",
+  "short_name": "箔",
   "description": "すしと酒-箔- のレシピ・コース進行・シフト確認",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1d1a16",
+  "background_color": "#ffffff",
   "theme_color": "#1d1a16",
   "lang": "ja",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

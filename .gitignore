@@ -2,3 +2,5 @@
 recipes_import.json
 *.md
 .claude/
+*.jpg
+*.jpeg

@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1d1a16">
-<title>箔ノート</title>
+<title>箔</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
   --bg:#f6f3ee;--surface:#fff;--surface2:#efeae2;--ink:#1d1a16;--ink2:#6b645b;--line:#e1dacf;
@@ -501,7 +502,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.1', APP_BUILD = 2;
+const APP_VERSION = 'v1.2', APP_BUILD = 3;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -1089,7 +1090,7 @@ const SHEETS = {
         <button class="btn block mt" data-act="pickJson" data-mode="restore">バックアップから復元</button>
         <h3>取り込み済みのシフト</h3>
         <div class="card">${weeks.map(w => `<div class="rrow"><div class="grow" data-act="weekView" data-w="${w.weekStart}"><b>${w.weekStart.slice(5).replace('-', '/')} の週</b><div class="xs muted">${w.staff.length}人・${esc(w.fileName || '')}</div></div><button class="btn sm danger" data-act="delWeek" data-w="${w.weekStart}">削除</button></div>`).join('') || '<div class="empty small">なし</div>'}</div>
-        <p class="small muted mt2" style="text-align:center">箔ノート ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます</p>`
+        <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます</p>`
     };
   },
   editCourse(sh) {
