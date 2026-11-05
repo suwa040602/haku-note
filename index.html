@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d1a16">
+<title>箔ノート</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#f6f3ee;--surface:#fff;--surface2:#efeae2;--ink:#1d1a16;--ink2:#6b645b;--line:#e1dacf;
+  --gold:#a8792a;--gold-soft:#f3e8d2;--red:#c0392b;--red-soft:#fbe5e1;--green:#2e7d4f;--green-soft:#e1f2e7;
+  --blue:#2f5f8f;--shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.05);
+  --tabh:62px;--headh:52px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141210;--surface:#1f1c19;--surface2:#2a2622;--ink:#f1ece4;--ink2:#a59d92;--line:#36312b;
+  --gold:#d8aa55;--gold-soft:#3a2f1c;--red:#ef7766;--red-soft:#3d211d;--green:#6fcf97;--green-soft:#1b3326;--blue:#8ab4e0;
+  --shadow:none;
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;overscroll-behavior-y:contain}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+header.top{position:fixed;top:0;left:0;right:0;height:calc(var(--headh) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 12px 0 16px;display:flex;align-items:center;gap:8px;background:var(--ink);color:#f6f3ee;z-index:20}
+header.top h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.05em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top h1 b{color:#d8aa55;font-weight:700;margin-right:6px}
+.iconbtn{background:none;border:0;padding:8px;border-radius:10px;display:grid;place-items:center;color:inherit}
+.iconbtn svg{width:24px;height:24px}
+#wl{font-size:11px;color:#d8aa55;display:none}
+main{padding:calc(var(--headh) + env(safe-area-inset-top) + 12px) 16px calc(var(--tabh) + env(safe-area-inset-bottom) + 20px)}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tabh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:flex;background:var(--surface);border-top:1px solid var(--line);z-index:20}
+nav.tabs button{flex:1;background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--ink2);position:relative}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--gold);font-weight:600}
+nav.tabs .dot{position:absolute;top:8px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;line-height:18px;padding:0 5px}
+.card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;min-height:42px;font-weight:600}
+.btn.pri{background:var(--gold);border-color:var(--gold);color:#fff}
+@media (prefers-color-scheme:dark){.btn.pri{color:#1d1a16}}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:13px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;align-items:center}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--ink2)}
+.small{font-size:13px}
+.xs{font-size:12px}
+.mt{margin-top:12px}.mt2{margin-top:20px}
+h2{font-size:16px;margin:20px 0 8px}
+h3{font-size:14px;margin:16px 0 6px;color:var(--ink2);font-weight:600}
+.badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface2);color:var(--ink2);font-weight:600;vertical-align:middle;white-space:nowrap}
+.badge.gold{background:var(--gold-soft);color:var(--gold)}
+.badge.red{background:var(--red-soft);color:var(--red)}
+.badge.green{background:var(--green-soft);color:var(--green)}
+.empty{text-align:center;color:var(--ink2);padding:36px 12px}
+input[type=text],input[type=number],input[type=search],input[type=date],input[type=time],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-height:42px}
+textarea{min-height:110px;resize:vertical}
+label.f{display:block;margin-top:12px;font-size:13px;color:var(--ink2);font-weight:600}
+label.f>input,label.f>select,label.f>textarea{margin-top:4px;color:var(--ink);font-weight:400}
+
+/* 今日 */
+.datebar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.datebar .d{flex:1;text-align:center}
+.datebar .d b{font-size:20px;display:block;line-height:1.2}
+.datebar .navb{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:18px}
+.shift{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.shift:last-child{border-bottom:0}
+.shift .t{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;font-size:16px}
+.shift .n{flex:1;min-width:0}
+.shift .n b{font-weight:600}
+.shift.me{background:var(--gold-soft)}
+.shift.me .n b{color:var(--gold)}
+.shift.now .t{color:var(--green)}
+.timeline{height:6px;background:var(--surface2);border-radius:3px;position:relative;margin-top:5px}
+.timeline i{position:absolute;top:0;bottom:0;background:var(--gold);border-radius:3px;opacity:.75}
+
+/* 進行 */
+.tcard{padding:12px 14px;margin-bottom:10px}
+.tcard .hd{display:flex;align-items:baseline;gap:8px}
+.tcard .no{font-size:22px;font-weight:800;min-width:2.2em}
+.tcard .next{margin-top:6px;display:flex;align-items:center;gap:10px}
+.tcard .next .nm{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px;white-space:nowrap}
+.cd.over{color:var(--red)}
+.cd.soon{color:var(--gold)}
+.tcard.due{border-color:var(--red);box-shadow:0 0 0 2px var(--red-soft)}
+.bar{height:5px;background:var(--surface2);border-radius:3px;margin-top:8px;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold)}
+.bar b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--red)}
+.item{display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .tm{font-variant-numeric:tabular-nums;width:3.2em;font-weight:700}
+.item.done{opacity:.55}
+.item.done .nm{text-decoration:line-through}
+.item.over .tm{color:var(--red)}
+.chk{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:none;display:grid;place-items:center;flex:none}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.chk svg{width:18px;height:18px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:20px;font-weight:700}
+.stepper .v{min-width:3.2em;text-align:center;font-size:20px;font-weight:800}
+
+/* アラート */
+#alerts{position:fixed;left:10px;right:10px;top:calc(var(--headh) + env(safe-area-inset-top) + 8px);z-index:40;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.alert{pointer-events:auto;background:var(--red);color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;animation:pop .25s}
+.alert.lo{background:var(--gold)}
+.alert span{flex:1}
+.alert button{background:rgba(255,255,255,.22);border:0;border-radius:8px;padding:6px 10px;color:#fff;font-weight:700}
+@keyframes pop{from{transform:translateY(-8px);opacity:0}}
+
+/* レシピ */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;white-space:nowrap;font-size:14px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rrow{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.rrow:last-child{border-bottom:0}
+.rrow img,.rrow .ph{width:48px;height:48px;border-radius:10px;object-fit:cover;flex:none;background:var(--surface2)}
+.ing{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:baseline}
+.ing:last-child{border-bottom:0}
+.ing .a{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;min-width:4.5em}
+.ing .a.na{font-weight:500;color:var(--ink2)}
+.ing a,.link{color:var(--blue);text-decoration:underline;cursor:pointer;background:none;border:0;padding:0}
+ol.steps{margin:0;padding:6px 14px 6px 34px}
+ol.steps li{padding:6px 0}
+.photos{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.photos img{height:110px;border-radius:10px;flex:none}
+.memo{white-space:pre-wrap;padding:12px 14px}
+.scale{padding:12px 14px;position:sticky;top:0;z-index:3}
+.edrow{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;background:var(--surface)}
+.edrow .g{display:grid;grid-template-columns:1fr 78px 70px;gap:6px}
+.edrow .g2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+
+/* シート */
+#sheet{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;display:none;-webkit-overflow-scrolling:touch}
+#sheet.open{display:block}
+#sheet .sh{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:6px;height:calc(var(--headh) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0 4px;background:var(--ink);color:#f6f3ee}
+#sheet .sh h2{margin:0;font-size:16px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sheet .sb{padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
+.sh .btn{min-height:36px;padding:5px 12px;background:#d8aa55;border-color:#d8aa55;color:#1d1a16}
+table.grid{border-collapse:collapse;font-size:12px;min-width:100%}
+table.grid th,table.grid td{border:1px solid var(--line);padding:4px 5px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.grid th:first-child,table.grid td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+table.grid td.me{background:var(--gold-soft)}
+.scrollx{overflow-x:auto;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.warn{background:var(--red-soft);color:var(--red);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.info{background:var(--gold-soft);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + 24px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:60;font-size:14px;max-width:90vw}
+.sec{padding:12px 14px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.fab{position:fixed;right:16px;bottom:calc(var(--tabh) + 16px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--gold);color:#fff;border:0;box-shadow:0 6px 18px rgba(0,0,0,.25);display:grid;place-items:center;z-index:15}
+.fab svg{width:28px;height:28px}
+img.full{width:100%;border-radius:12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="title"><b>箔</b>今日</h1>
+  <span id="wl">● 画面ON</span>
+  <button class="iconbtn" data-act="openSettings" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+<div id="alerts"></div>
+<main id="main"></main>
+<nav class="tabs">
+  <button data-act="tab" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>今日</button>
+  <button data-act="tab" data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>進行<span class="dot" id="tabdot" hidden></span></button>
+  <button data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h11a3 3 0 0 1 3 3v14H8a3 3 0 0 1-3-3z"/><path d="M5 17.5a3 3 0 0 1 3-3h11M9 7.5h6M9 10.5h4"/></svg>レシピ</button>
+</nav>
+<div id="sheet"></div>
+<input type="file" id="pdfIn" accept="application/pdf,.pdf" hidden>
+<input type="file" id="jsonIn" accept="application/json,.json" hidden>
+<input type="file" id="photoIn" accept="image/*" multiple hidden>
+
+<script>
+// ==SHIFT-PARSER-START==
+const ShiftParser = (() => {
+  const WD = '日月火水木金土';
+  const toHalf = s => s.replace(/[０-９：／（）＊．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const median = a => { if (!a.length) return 0; const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
+
+  // pdf.js → [{pages:[{width,height,items:[{str,x,y,w,h}]}]}]（yは上から下）
+  async function extract(pdfjsLib, data, opts = {}) {
+    const doc = await pdfjsLib.getDocument({ data, ...opts }).promise;
+    const pages = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p);
+      const vp = page.getViewport({ scale: 1 });
+      const tc = await page.getTextContent();
+      const items = [];
+      for (const it of tc.items) {
+        if (!it.str || !it.str.trim()) continue;
+        const t = pdfjsLib.Util.transform(vp.transform, it.transform);
+        const h = Math.hypot(t[2], t[3]) || it.height || 8;
+        items.push({ str: it.str, x: t[4], y: t[5] - h * 0.35, w: it.width, h });
+      }
+      pages.push({ width: vp.width, height: vp.height, items });
+    }
+    return pages;
+  }
+
+  // 同じ行の近接アイテムを単語にまとめ、1文字ごとのx座標を持たせる
+  function toWords(items) {
+    const hs = median(items.map(i => i.h)) || 8;
+    const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+    const lines = [];
+    for (const it of sorted) {
+      let ln = lines.find(l => Math.abs(l.y - it.y) < hs * 0.45);
+      if (!ln) { ln = { y: it.y, items: [] }; lines.push(ln); }
+      ln.items.push(it);
+    }
+    const words = [];
+    for (const ln of lines) {
+      ln.items.sort((a, b) => a.x - b.x);
+      let cur = null;
+      for (const it of ln.items) {
+        const s = toHalf(it.str);
+        const chars = [...s];
+        const cw = it.w / Math.max(chars.length, 1);
+        const cx = chars.map((_, i) => it.x + cw * (i + 0.5));
+        if (cur && it.x - cur.x1 < Math.max(it.h, hs) * 0.6) {
+          cur.text += s; cur.cx.push(...cx); cur.x1 = it.x + it.w;
+        } else {
+          cur = { text: s, cx, x0: it.x, x1: it.x + it.w, y: ln.y, h: it.h };
+          words.push(cur);
+        }
+      }
+    }
+    return { words, hs };
+  }
+
+  // 1行のテキストから曜日（日〜土）の位置を拾う。「日野」のような名前は除外
+  function weekdayHits(w) {
+    const out = [];
+    const t = w.text;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (!WD.includes(c)) continue;
+      const prev = t[i - 1] || ' ', next = t[i + 1] || ' ';
+      const okPrev = /[\s(（\d/月]/.test(prev) || i === 0;
+      const okNext = /[\s)）\d]/.test(next) || i === t.length - 1;
+      if (okPrev && okNext && !(next === '曜' )) out.push({ wd: WD.indexOf(c), x: w.cx[i], y: w.y });
+      else if (okPrev && next === '曜') out.push({ wd: WD.indexOf(c), x: w.cx[i], y: w.y });
+    }
+    return out;
+  }
+
+  // 「2026年11月01日 ～ 2026年11月07日」のような期間を優先（印刷日時・作成日時は避ける）
+  function findTitleDate(words) {
+    const RE = /(20\d{2})\s*[年/.\-]\s*(\d{1,2})\s*[月/.\-]\s*(\d{1,2})日?/;
+    let fallback = null;
+    for (const w of words) {
+      const m = w.text.match(RE);
+      if (!m) continue;
+      const d = new Date(+m[1], +m[2] - 1, +m[3]);
+      const after = w.text.slice(m.index + m[0].length);
+      if (/^\s*[～〜~\-ー－]/.test(after)) return d;
+      if (!fallback && !/作成|出力|印刷/.test(w.text) && !/\d{1,2}:\d{2}/.test(after)) fallback = d;
+    }
+    return fallback;
+  }
+
+  const TIME_RE = /(\d{1,2})[:：](\d{2})/g;
+  // 「箔 草津店」→「草津店」
+  const cleanDept = s => { s = s.replace(/\s+/g, ' ').trim(); const m = s.match(/^箔\s*(.+)$/); return (m ? m[1] : s).replace(/\s/g, ''); };
+  const SKIP_NAME = /^(氏名|名前|スタッフ|従業員|人数|時間|労働時間|備考|所属|No\.?|\d+|[-－ー—]+)$/;
+  // 集計行：人として扱わないが、行の区切りとしては使う
+  const TOTAL_ROW = /店舗計|合計|総計|小計|ｼﾌﾄ人数|ｼﾌﾄ時間|シフト人数|シフト時間|出勤者数|^計$/;
+  const DEPT_HEAD = /^部署\s*[:：]\s*/;
+  const DEPT_RE = /^[【\[［<＜■●◆].*|.*(店|部|部門|課|グループ|応援|ヘルプ)[】\]］>＞]?$/;
+
+  function parsePage(page, ctx) {
+    const { words, hs } = toWords(page.items);
+    const warnings = [];
+    // ---- 曜日ヘッダー行 ----
+    const lineMap = new Map();
+    for (const w of words) {
+      const key = Math.round(w.y / (hs * 0.45));
+      const hits = weekdayHits(w);
+      if (!hits.length) continue;
+      let ln = [...lineMap.values()].find(l => Math.abs(l.y - w.y) < hs * 0.5);
+      if (!ln) { ln = { y: w.y, hits: [] }; lineMap.set(key + ':' + w.y, ln); }
+      ln.hits.push(...hits);
+    }
+    const headers = [...lineMap.values()]
+      .filter(l => new Set(l.hits.map(h => h.wd)).size >= 5)
+      .sort((a, b) => a.y - b.y);
+    if (!headers.length) return { sections: [], warnings: ['曜日の見出し行（日〜土）が見つかりません'] };
+
+    const titleDate = ctx.forced || findTitleDate(words) || ctx.titleDate;
+    if (titleDate) ctx.titleDate = titleDate;
+    const sections = [];
+    for (let hi = 0; hi < headers.length; hi++) {
+      const hd = headers[hi];
+      const yEnd = hi + 1 < headers.length ? headers[hi + 1].y - hs : Infinity;
+      // 列：同じ曜日が複数拾えた場合は最初の1つ
+      const cols = [];
+      for (const h of hd.hits.sort((a, b) => a.x - b.x)) {
+        if (!cols.some(c => Math.abs(c.x - h.x) < hs)) cols.push({ wd: h.wd, x: h.x });
+      }
+      const gaps = cols.slice(1).map((c, i) => c.x - cols[i].x);
+      const cw = median(gaps) || hs * 6;
+      cols.forEach((c, i) => {
+        c.left = i === 0 ? c.x - cw / 2 : (cols[i - 1].x + c.x) / 2;
+        c.right = i === cols.length - 1 ? c.x + cw / 2 : (c.x + cols[i + 1].x) / 2;
+      });
+      const colOf = x => cols.findIndex(c => x >= c.left && x < c.right);
+
+      // ---- 日付（見出し付近の m/d や d）----
+      const near = words.filter(w => Math.abs(w.y - hd.y) < hs * 2.2);
+      for (const w of near) {
+        const re = /(?:(\d{1,2})\s*[/月]\s*)?(\d{1,2})(?=\s*(?:日?\s*[(（]|日|$|\s|[/]))/g;
+        let m;
+        while ((m = re.exec(w.text))) {
+          const idx = m.index + m[0].length - 1;
+          const x = w.cx[Math.min(idx, w.cx.length - 1)];
+          const ci = colOf(x);
+          if (ci < 0) continue;
+          const d = +m[2];
+          if (d < 1 || d > 31) continue;
+          const c = cols[ci];
+          if (c.day == null || (m[1] && c.month == null)) { c.day = d; if (m[1]) c.month = +m[1]; }
+        }
+      }
+      // 日付確定
+      let base = titleDate;
+      const firstWithDay = cols.find(c => c.day != null);
+      const year0 = base ? base.getFullYear() : (ctx.year || new Date().getFullYear());
+      if (firstWithDay) {
+        let month = firstWithDay.month ?? (base ? base.getMonth() + 1 : new Date().getMonth() + 1);
+        let year = year0;
+        if (base && firstWithDay.month && Math.abs(firstWithDay.month - (base.getMonth() + 1)) > 6) year += firstWithDay.month < base.getMonth() + 1 ? 1 : -1;
+        let prevDay = 0;
+        for (const c of cols) {
+          if (c.day == null) continue;
+          if (c.month != null) { if (c.month < month && month - c.month > 6) year++; month = c.month; }
+          else if (c.day < prevDay) { month++; if (month > 12) { month = 1; year++; } }
+          prevDay = c.day;
+          c.date = new Date(year, month - 1, c.day);
+        }
+        // 抜けを前後から補完
+        cols.forEach((c, i) => {
+          if (c.date) return;
+          const j = cols.findIndex(k => k.date);
+          c.date = new Date(cols[j].date); c.date.setDate(c.date.getDate() + (i - j));
+        });
+      } else if (base) {
+        const d0 = new Date(base);
+        const diff = (cols[0].wd - d0.getDay() + 7) % 7;
+        d0.setDate(d0.getDate() + (diff > 3 ? diff - 7 : diff));
+        cols.forEach((c, i) => { c.date = new Date(d0); c.date.setDate(d0.getDate() + i); });
+      } else {
+        return { sections: [], warnings: ['日付が読み取れません'], needsDate: true };
+      }
+      cols.forEach(c => {
+        if (c.date.getDay() !== c.wd) warnings.push(`${ymd(c.date)} の曜日が見出し（${WD[c.wd]}）と一致しません`);
+      });
+
+      // ---- 氏名と時刻 ----
+      const body = words.filter(w => w.y > hd.y + hs * 0.6 && w.y < yEnd);
+      const nameRight = cols[0].left - hs * 0.2;
+      const nameLines = [];
+      for (const w of body.filter(w => w.x1 <= nameRight + hs * 0.5 && w.x0 < nameRight)) {
+        let ln = nameLines.find(l => Math.abs(l.y - w.y) < hs * 0.5);
+        if (!ln) { ln = { y: w.y, parts: [] }; nameLines.push(ln); }
+        ln.parts.push(w);
+      }
+      const names = nameLines
+        .map(l => { l.parts.sort((a, b) => a.x0 - b.x0); l.text = l.parts.map(p => p.text.trim()).join(' ').trim(); return l; })
+        .filter(l => l.text && !SKIP_NAME.test(l.text.replace(/\s/g, '')) && !/^\d{1,2}[:：]\d{2}/.test(l.text) && !/^[\d.:：\s時間h]+$/.test(l.text))
+        .sort((a, b) => a.y - b.y);
+      names.forEach(n => { if (TOTAL_ROW.test(n.text.replace(/\s/g, ''))) n.skip = true; });
+      if (!names.length) { warnings.push('氏名が見つかりません'); continue; }
+
+      const times = [];
+      for (const w of body) {
+        let m; TIME_RE.lastIndex = 0;
+        while ((m = TIME_RE.exec(w.text))) {
+          const before = w.text.slice(Math.max(0, m.index - 2), m.index);
+          if (/休|憩|計/.test(before)) continue;
+          const x = w.cx[Math.min(m.index + 2, w.cx.length - 1)];
+          const ci = colOf(x);
+          if (ci < 0) continue;
+          const hh = +m[1], mm = +m[2];
+          if (hh > 29 || mm > 59) continue;
+          times.push({ ci, y: w.y, x, min: hh * 60 + mm, raw: m[0] });
+        }
+      }
+
+      const stars = body.filter(w => /^[*＊※]$/.test(w.text.trim()) && w.x0 >= nameRight).map(w => w.y);
+      const spacing = median(names.slice(1).map((n, i) => n.y - names[i].y)) || hs * 2;
+      const assign = alpha => {
+        const cells = names.map(() => cols.map(() => []));
+        let dist = 0;
+        for (const t of times) {
+          let k = -1;
+          for (let i = 0; i < names.length; i++) {
+            const top = names[i].y - alpha;
+            const bot = i + 1 < names.length ? names[i + 1].y - alpha : names[i].y - alpha + spacing;
+            if (t.y >= top && t.y < bot) { k = i; break; }
+          }
+          if (k >= 0) { cells[k][t.ci].push(t); dist += Math.abs(t.y - names[k].y); }
+        }
+        cells.forEach((row, i) => { if (names[i].skip) row.forEach(c => { c.length = 0; }); });
+        let score = 0;
+        for (const row of cells) for (const c of row) score += c.length === 2 ? 2 : c.length === 0 ? 0 : -1;
+        return { cells, score, dist };
+      };
+      let best = null;
+      for (let s = -8; s <= 16; s++) {
+        const alpha = spacing * s / 16 + 0.5;
+        const r = assign(alpha);
+        if (!best || r.score > best.score || (r.score === best.score && r.dist < best.dist - 0.01)) best = { ...r, alpha };
+      }
+
+      let dept = '';
+      const staff = [];
+      const bandOf = y => {
+        for (let i = 0; i < names.length; i++) {
+          const topY = names[i].y - best.alpha;
+          const bot = i + 1 < names.length ? names[i + 1].y - best.alpha : topY + spacing;
+          if (y >= topY && y < bot) return i;
+        }
+        return -1;
+      };
+      const starRows = new Set(stars.map(bandOf));
+      names.forEach((n, i) => {
+        if (n.skip) return;
+        const cells = best.cells[i];
+        const has = cells.some(c => c.length);
+        let label = n.text;
+        if (DEPT_HEAD.test(label)) { dept = cleanDept(label.replace(DEPT_HEAD, '')); return; }
+        if (!has && DEPT_RE.test(label.replace(/\s/g, ''))) { dept = cleanDept(label.replace(/[【】\[\]［］<>＜＞■●◆]/g, '')); return; }
+        const support = /[*＊※]/.test(label) || starRows.has(i);
+        label = label.replace(/[*＊※]/g, '').trim();
+        let personDept = dept;
+        const pm = label.match(/^(.*?)\s*[(（]([^)）]+)[)）]\s*$/);
+        if (pm) { label = pm[1].trim(); personDept = pm[2].trim(); }
+        else if (n.parts.length >= 2) {
+          const ps = n.parts.map(p => p.text.replace(/[*＊※]/g, '').trim()).filter(Boolean);
+          const di = ps.findIndex(p => /(店|部|課)$/.test(p) || (ctx.knownDepts || []).includes(p));
+          if (di >= 0 && ps.length >= 2) { personDept = ps[di]; ps.splice(di, 1); label = ps.join(' '); }
+        }
+        const shifts = {};
+        cells.forEach((c, ci) => {
+          if (!c.length) return;
+          c.sort((a, b) => a.y - b.y || a.x - b.x);
+          const st = c[0].min;
+          let en = c.length >= 2 ? c[c.length - 1].min : null;
+          if (en != null && en <= st) en += 24 * 60; // 00:00 → 24:00
+          if (c.length > 2) warnings.push(`${label} ${ymd(cols[ci].date)}: 時刻が${c.length}個あります（最初と最後を採用）`);
+          shifts[ymd(cols[ci].date)] = { start: st, end: en, raw: c.map(t => t.raw).join(' ') };
+        });
+        staff.push({ name: label.replace(/\s+/g, ' '), dept: cleanDept(personDept || ''), support, shifts });
+      });
+      sections.push({ dates: cols.map(c => ymd(c.date)), staff, debug: { cols: cols.map(c => ({ wd: WD[c.wd], x: Math.round(c.x), date: ymd(c.date) })), alpha: best.alpha, spacing, nTimes: times.length } });
+    }
+    return { sections, warnings };
+  }
+
+  function parse(pages, opts = {}) {
+    const ctx = { knownDepts: opts.knownDepts || ['トキシラズ', '草津店', '彦根店'], year: opts.year, forced: opts.baseDate ? new Date(opts.baseDate + 'T00:00:00') : null };
+    const warnings = [];
+    const byName = new Map();
+    const dates = new Set();
+    let needsDate = false;
+    const debug = [];
+    for (const pg of pages) {
+      const r = parsePage(pg, ctx);
+      warnings.push(...r.warnings);
+      if (r.needsDate) needsDate = true;
+      for (const s of r.sections) {
+        s.dates.forEach(d => dates.add(d));
+        debug.push(s.debug);
+        for (const st of s.staff) {
+          const key = st.name;
+          if (!byName.has(key)) byName.set(key, { ...st, shifts: { ...st.shifts } });
+          else Object.assign(byName.get(key).shifts, st.shifts);
+        }
+      }
+    }
+    const ds = [...dates].sort();
+    let weekStart = null;
+    if (ds.length) {
+      const d = new Date(ds[0] + 'T00:00:00');
+      d.setDate(d.getDate() - d.getDay());
+      weekStart = ymd(d);
+    }
+    return { weekStart, dates: ds, staff: [...byName.values()], warnings, needsDate: needsDate && !ds.length, debug };
+  }
+
+  const fmt = m => m == null ? '?' : `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+  return { extract, parse, fmt, ymd };
+})();
+// ==SHIFT-PARSER-END==
+</script>
+<script>
+'use strict';
+const APP_VERSION = 'v1.0', APP_BUILD = 1;
+const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+const CATS = ['コース', '単品', '調味料', '仕込み'];
+const WD = '日月火水木金土';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => new Date(s + 'T00:00:00');
+const hm = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtMin = m => m == null ? '?' : `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const norm = s => String(s || '').toLowerCase().replace(/[\s　]/g, '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+const ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+
+/* ========== IndexedDB ========== */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('haku-note', 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        for (const [n, k] of [['recipes', 'id'], ['courses', 'id'], ['tables', 'id'], ['shifts', 'weekStart'], ['kv', 'k']])
+          if (!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: k });
+      };
+      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  run(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode);
+      const req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req && 'result' in req ? req.result : undefined);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
+    });
+  },
+  all: s => DB.run(s, 'readonly', st => st.getAll()),
+  put: (s, v) => DB.run(s, 'readwrite', st => { st.put(v); }),
+  del: (s, k) => DB.run(s, 'readwrite', st => { st.delete(k); }),
+  replaceAll: (s, arr) => DB.run(s, 'readwrite', st => { st.clear(); arr.forEach(v => st.put(v)); }),
+  putMany: (s, arr) => DB.run(s, 'readwrite', st => { arr.forEach(v => st.put(v)); }),
+};
+
+const S = {
+  tab: 'today', recipes: [], courses: [], tables: [], shifts: [], kv: { myName: '' },
+  day: ymd(new Date()), q: '', cat: '', alerts: [], sheets: [],
+};
+async function loadAll() {
+  [S.recipes, S.courses, S.tables, S.shifts] = await Promise.all(['recipes', 'courses', 'tables', 'shifts'].map(DB.all));
+  for (const { k, v } of await DB.all('kv')) S.kv[k] = v;
+}
+const setKv = (k, v) => { S.kv[k] = v; return DB.put('kv', { k, v }); };
+const recipeById = id => S.recipes.find(r => r.id === id);
+const courseById = id => S.courses.find(c => c.id === id);
+function upsert(list, obj) { const i = list.findIndex(x => x.id === obj.id); if (i >= 0) list[i] = obj; else list.push(obj); }
+async function saveRecipe(r) { r.updatedAt = Date.now(); upsert(S.recipes, r); await DB.put('recipes', r); }
+async function saveCourse(c) { upsert(S.courses, c); await DB.put('courses', c); }
+async function saveTable(t) { upsert(S.tables, t); await DB.put('tables', t); }
+
+function toast(msg, ms = 2200) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el); setTimeout(() => el.remove(), ms);
+}
+
+/* ========== 分量の換算・丸め ========== */
+const COUNT_UNITS = /^(個|ケ|コ|枚|切れ|切|本|尾|玉|株|房|片|杯|丁|束|袋|パック|缶|匹|貫|人前|カット|かけ|粒|輪)$/;
+function parseAmount(s) {
+  s = String(s ?? '').trim().replace(/[０-９．／]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  if (!s) return null;
+  let m = s.match(/^(\d+)\s*(?:と|\s)\s*(\d+)\/(\d+)$/);
+  if (m) return +m[1] + m[2] / m[3];
+  m = s.match(/^(\d+)\/(\d+)$/);
+  if (m) return m[1] / m[2];
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+function fracStr(v) {
+  if (v < 0.06) return String(+v.toFixed(2));
+  const c8 = Math.round(v * 8) / 8, c3 = Math.round(v * 3) / 3;
+  const use3 = Math.abs(c3 - v) < Math.abs(c8 - v) - 0.01 && Math.round(c3 * 3) % 3 !== 0;
+  const whole = Math.floor(use3 ? c3 + 1e-9 : c8 + 1e-9);
+  const rem = (use3 ? c3 : c8) - whole;
+  let f = '';
+  if (use3) f = Math.round(rem * 3) === 1 ? '1/3' : '2/3';
+  else if (rem > 1e-9) { const n = Math.round(rem * 8); const g = n % 4 === 0 ? 4 : n % 2 === 0 ? 2 : 1; f = `${n / g}/${8 / g}`; }
+  if (!whole) return f || '0';
+  return f ? `${whole}と${f}` : String(whole);
+}
+function fmtAmount(amount, unit, factor = 1) {
+  if (amount == null || amount === '') return null;
+  const v = amount * factor, u = unit || '';
+  if (/^(g|ｇ|グラム|ml|mL|ML|cc|ｃｃ|㏄)$/.test(u)) return (v < 10 ? Math.round(v * 2) / 2 : Math.round(v)) + u;
+  if (/^(kg|L|l|リットル)$/.test(u)) return +(Math.round(v * 100) / 100) + u;
+  if (/^(大さじ|小さじ|カップ)$/.test(u)) return u + (Math.round(v * 2) / 2);
+  if (COUNT_UNITS.test(u)) return fracStr(v) + u;
+  return +(Math.round(v * 100) / 100) + u;
+}
+
+/* ========== 画面ルーティング ========== */
+function setTab(t) { S.tab = t; render(); window.scrollTo(0, 0); }
+function pushSheet(sh) {
+  S.sheets.push(sh);
+  history.pushState({ sheet: S.sheets.length }, '');
+  renderSheet(true);
+}
+function closeSheet() { history.back(); }
+function replaceSheet(sh) { S.sheets[S.sheets.length - 1] = sh; renderSheet(true); }
+let suppressPop = 0;
+function closeSheets(n) {
+  n = Math.min(n, S.sheets.length); if (!n) return;
+  S.sheets.splice(-n); suppressPop++; history.go(-n); renderSheet(true); render();
+}
+addEventListener('popstate', () => {
+  if (suppressPop) { suppressPop--; return; }
+  if (S.sheets.length) { S.sheets.pop(); renderSheet(true); render(); }
+});
+const TAB_TITLE = { today: '今日のシフト', progress: 'コース進行', recipes: 'レシピ' };
+function render() {
+  $('#title').innerHTML = `<b>箔</b>${TAB_TITLE[S.tab]}`;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  const m = $('#main');
+  if (S.tab === 'today') m.innerHTML = viewToday();
+  else if (S.tab === 'progress') m.innerHTML = viewProgress();
+  else { m.innerHTML = viewRecipes(); $('#rlist').innerHTML = recipeListHtml(); }
+  updateTabDot();
+}
+function renderSheet(scrollTop) {
+  const el = $('#sheet');
+  const sh = S.sheets[S.sheets.length - 1];
+  if (!sh) { el.classList.remove('open'); el.innerHTML = ''; document.body.style.overflow = ''; return; }
+  const v = SHEETS[sh.type](sh);
+  el.innerHTML = `<div class="sh"><button class="iconbtn" data-act="back" aria-label="戻る">${ICON_BACK}</button><h2>${v.title}</h2>${v.right || ''}</div><div class="sb">${v.body}</div>`;
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (scrollTop) el.scrollTop = 0;
+}
+const cur = () => S.sheets[S.sheets.length - 1];
+
+/* ========== 今日（シフト） ========== */
+function weekFor(dateStr) {
+  return [...S.shifts].sort((a, b) => b.importedAt - a.importedAt).find(w => w.dates.includes(dateStr));
+}
+function shiftsOn(dateStr) {
+  const w = weekFor(dateStr);
+  if (!w) return null;
+  const rows = [];
+  for (const s of w.staff) { const sh = s.shifts[dateStr]; if (sh) rows.push({ ...s, ...sh }); }
+  rows.sort((a, b) => a.start - b.start || (a.end ?? 9999) - (b.end ?? 9999));
+  return { week: w, rows };
+}
+const isMe = name => S.kv.myName && norm(name) === norm(S.kv.myName);
+function viewToday() {
+  const d = parseYmd(S.day);
+  const today = ymd(new Date());
+  const rel = S.day === today ? '今日' : ((d - parseYmd(today)) / 864e5 === 1 ? '明日' : (d - parseYmd(today)) / 864e5 === -1 ? '昨日' : '');
+  const r = shiftsOn(S.day);
+  let list;
+  if (!r) list = `<div class="card empty">この日のシフト表は未取り込みです<br><span class="small">LINEで届いたPDFを下のボタンから読み込んでください</span></div>`;
+  else if (!r.rows.length) list = `<div class="card empty">この日の出勤者はいません</div>`;
+  else {
+    const mins = r.rows.flatMap(x => [x.start, x.end ?? x.start]);
+    const lo = Math.min(...mins), hi = Math.max(...mins, lo + 60);
+    const nowMin = S.day === today ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    list = `<div class="card">${r.rows.map(x => {
+      const on = nowMin >= x.start && nowMin < (x.end ?? x.start);
+      const l = (x.start - lo) / (hi - lo) * 100, w = ((x.end ?? x.start + 30) - x.start) / (hi - lo) * 100;
+      return `<div class="shift ${isMe(x.name) ? 'me' : ''} ${on ? 'now' : ''}">
+        <div class="n"><b>${esc(x.name)}</b> ${x.support ? `<span class="badge gold">応援${x.dept ? ' ' + esc(x.dept) : ''}</span>` : x.dept ? `<span class="badge">${esc(x.dept)}</span>` : ''}
+          <div class="timeline"><i style="left:${l}%;width:${w}%"></i></div></div>
+        <div class="t">${fmtMin(x.start)}<span class="muted">〜</span>${x.end != null ? fmtMin(x.end) : '?'}</div></div>`;
+    }).join('')}</div>
+    <p class="xs muted">${r.rows.length}人 ・ ${esc(r.week.fileName || '')} を ${new Date(r.week.importedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} に取り込み ・ <button class="link" data-act="weekView" data-w="${r.week.weekStart}">週の一覧</button></p>`;
+  }
+  return `<div class="datebar" id="swipe">
+      <button class="navb" data-act="day" data-d="-1" aria-label="前日">◀</button>
+      <div class="d"><b>${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）</b><span class="small muted">${rel || `<button class="link" data-act="dayToday">今日に戻る</button>`}</span></div>
+      <button class="navb" data-act="day" data-d="1" aria-label="翌日">▶</button></div>
+    ${list}
+    <button class="btn block mt2" data-act="pickPdf">シフト表PDFを取り込む</button>
+    ${!S.kv.myName ? `<p class="xs muted">設定で自分の名前を入れると、自分の行が強調されます</p>` : ''}`;
+}
+
+/* --- PDF取り込み --- */
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('読み込み失敗: ' + src)); document.head.appendChild(s); });
+}
+async function ensurePdfJs() {
+  if (window.pdfjsLib) return;
+  await loadScript(PDFJS + 'build/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'build/pdf.worker.min.js';
+}
+async function importPdf(buf, fileName, baseDate) {
+  await ensurePdfJs();
+  const pages = await ShiftParser.extract(pdfjsLib, new Uint8Array(buf.slice(0)), { cMapUrl: PDFJS + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS + 'standard_fonts/' });
+  const knownDepts = [...new Set(S.shifts.flatMap(w => w.staff.map(s => s.dept)).filter(Boolean)), 'トキシラズ', '草津店', '彦根店'];
+  const result = ShiftParser.parse(pages, { knownDepts, baseDate });
+  return { result, fileName, buf };
+}
+async function onPdfChosen(file) {
+  try {
+    toast('解析中…');
+    const buf = await file.arrayBuffer();
+    const r = await importPdf(buf, file.name);
+    pushSheet({ type: 'shiftPreview', ...r });
+  } catch (e) { console.error(e); alert('PDFの読み込みに失敗しました\n' + e.message); }
+}
+
+/* ========== 進行（卓） ========== */
+const pausedExtra = (t, now = Date.now()) => t.pausedAt ? (now - t.pausedAt) / 60000 : 0;
+const itemDue = (t, i, now) => t.startAt + (t.items[i].offsetMin + t.shiftMin + pausedExtra(t, now)) * 60000;
+const loAt = t => t.startAt + t.lastOrderMin * 60000;
+const endAt = t => t.startAt + t.durationMin * 60000;
+const timed = (t, i) => !t.items[i].afterCourse && t.items[i].offsetMin != null;
+function nextItem(t, now = Date.now()) {
+  let best = -1;
+  t.items.forEach((it, i) => {
+    if (!timed(t, i) || t.served[i]) return;
+    if (best < 0 || itemDue(t, i, now) < itemDue(t, best, now)) best = i;
+  });
+  return best;
+}
+function overLO(t, now = Date.now()) {
+  return t.items.some((it, i) => timed(t, i) && !t.served[i] && itemDue(t, i, now) > loAt(t) + 30000);
+}
+function cdStr(ms) {
+  const neg = ms < 0; ms = Math.abs(ms);
+  const m = Math.floor(ms / 60000), s = Math.floor(ms % 60000 / 1000);
+  return (neg ? '+' : '') + `${m}:${pad(s)}`;
+}
+function tablesSorted() {
+  const now = Date.now();
+  return [...S.tables].sort((a, b) => {
+    const na = nextItem(a, now), nb = nextItem(b, now);
+    const da = na >= 0 ? itemDue(a, na, now) : Infinity, db = nb >= 0 ? itemDue(b, nb, now) : Infinity;
+    return da - db || a.startAt - b.startAt;
+  });
+}
+function viewProgress() {
+  const now = Date.now();
+  const cards = tablesSorted().map(t => {
+    const ni = nextItem(t, now);
+    const el = now - t.startAt;
+    const pct = Math.min(100, Math.max(0, el / (t.durationMin * 60000) * 100));
+    let next;
+    if (ni >= 0) {
+      const rem = itemDue(t, ni, now) - now;
+      next = `<div class="next"><span class="nm">${esc(t.items[ni].name)}</span>
+        <span class="cd ${t.pausedAt ? '' : rem < 0 ? 'over' : rem < 180000 ? 'soon' : ''}">${t.pausedAt ? '停止中' : rem < 0 ? cdStr(rem) + ' 超過' : 'あと ' + cdStr(rem)}</span>
+        <button class="chk" data-act="serve" data-t="${t.id}" data-i="${ni}" aria-label="提供済">${ICON_CHECK}</button></div>`;
+    } else {
+      const sweets = t.items.findIndex((it, i) => it.afterCourse && !t.served[i]);
+      next = `<div class="next"><span class="nm muted">${sweets >= 0 ? `残り：${esc(t.items[sweets].name)}（LO後に手動）` : '全品提供済み'}</span>
+        ${sweets >= 0 ? `<button class="chk" data-act="serve" data-t="${t.id}" data-i="${sweets}">${ICON_CHECK}</button>` : ''}</div>`;
+    }
+    const due = ni >= 0 && !t.pausedAt && itemDue(t, ni, now) <= now;
+    const lo = loAt(t) - now, end = endAt(t) - now;
+    return `<div class="card tcard ${due ? 'due' : ''}" data-act="openTable" data-t="${t.id}">
+      <div class="hd"><span class="no">${esc(t.no)}</span><span class="grow"><b>${esc(t.courseName)}</b> <span class="muted small">${t.people}名</span>
+        ${t.pausedAt ? '<span class="badge red">一時停止</span>' : ''}${overLO(t, now) ? '<span class="badge red">LO超過見込み</span>' : ''}${t.shiftMin >= 1 ? `<span class="badge">+${Math.round(t.shiftMin)}分</span>` : ''}</span>
+        <span class="small muted">${end < 0 ? '<span class="badge red">終了時刻</span>' : lo > 0 ? `LOまで${Math.ceil(lo / 60000)}分` : `LO済・終了まで${Math.ceil(end / 60000)}分`}</span></div>
+      ${next}
+      <div class="bar"><i style="width:${pct}%"></i><b style="left:${t.lastOrderMin / t.durationMin * 100}%"></b></div>
+      <div class="row xs muted" style="margin-top:4px"><span>開始 ${hm(t.startAt)}</span><span class="grow"></span><span>LO ${hm(loAt(t))}</span><span>終了 ${hm(endAt(t))}</span></div>
+    </div>`;
+  }).join('');
+  return `${cards || `<div class="card empty">進行中の卓はありません<br><span class="small">右下の＋から卓を追加</span></div>`}
+    ${S.tables.length ? '<p class="xs muted">進行中は画面を点けたままにしてください（画面オフ中は通知が遅れます）</p>' : ''}
+    <button class="fab" data-act="addTable" aria-label="卓を追加">${ICON_PLUS}</button>`;
+}
+function updateTabDot() {
+  const now = Date.now();
+  const n = S.tables.filter(t => { const i = nextItem(t, now); return i >= 0 && !t.pausedAt && itemDue(t, i, now) <= now; }).length;
+  const d = $('#tabdot'); d.hidden = !n; d.textContent = n;
+}
+
+/* --- 通知 --- */
+let audioCtx = null;
+let pressing = false;
+addEventListener('pointerdown', () => { pressing = true; }, true);
+addEventListener('pointerup', () => setTimeout(() => { pressing = false; }, 50), true);
+addEventListener('pointercancel', () => { pressing = false; }, true);
+function unlockAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { } }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function beep(kind) {
+  if (!audioCtx) return;
+  const notes = kind === 'lo' ? [660, 880, 1100] : [880, 880, 880];
+  notes.forEach((f, k) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = f; o.type = 'sine';
+    const t0 = audioCtx.currentTime + k * 0.28;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+    o.connect(g).connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.25);
+  });
+}
+function fire(text, kind, tableId) {
+  beep(kind);
+  navigator.vibrate?.(kind === 'lo' ? [600, 200, 600, 200, 600] : [400, 150, 400, 150, 400]);
+  S.alerts.push({ id: uid('a'), text, kind, tableId });
+  renderAlerts();
+}
+function renderAlerts() {
+  $('#alerts').innerHTML = S.alerts.slice(-4).map(a => `<div class="alert ${a.kind === 'lo' ? 'lo' : ''}"><span data-act="alertOpen" data-a="${a.id}">${esc(a.text)}</span><button data-act="alertClose" data-a="${a.id}">OK</button></div>`).join('');
+}
+function tick() {
+  const now = Date.now();
+  for (const t of S.tables) {
+    let changed = false;
+    const hits = [];
+    t.items.forEach((it, i) => {
+      if (!timed(t, i) || t.served[i] || t.pausedAt) return;
+      const due = itemDue(t, i, now), key = 'i' + i;
+      if (due <= now && !t.notified[key]) { t.notified[key] = 1; changed = true; if (now - due < 180000) hits.push(it.name); }
+    });
+    const loKey = 'lo', endKey = 'end';
+    let loHit = false;
+    if (loAt(t) <= now && !t.notified[loKey]) { t.notified[loKey] = 1; changed = true; loHit = now - loAt(t) < 180000; }
+    if (loHit) fire(`卓${t.no}：ラストオーダー${hits.length ? `＋${hits.join('・')}` : ''}`, 'lo', t.id);
+    else if (hits.length) fire(`卓${t.no}：${hits.join('・')} の時間です`, 'item', t.id);
+    if (endAt(t) <= now && !t.notified[endKey]) { t.notified[endKey] = 1; changed = true; if (now - endAt(t) < 180000) fire(`卓${t.no}：終了時刻（120分）です`, 'lo', t.id); }
+    if (changed) DB.put('tables', t);
+  }
+  const ae = document.activeElement;
+  const typing = pressing || (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName));
+  if (S.tab === 'progress' && !S.sheets.length && !typing) { const y = scrollY; $('#main').innerHTML = viewProgress(); scrollTo(0, y); }
+  const sh = cur();
+  if (sh && sh.type === 'table' && !typing) { const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; }
+  updateTabDot();
+  if (S.tab === 'today' && !S.sheets.length && now % 60000 < 1000) render();
+}
+/* 日付が変わる・提供時刻をずらした場合は通知フラグを戻す */
+function resetNotified(t) {
+  const now = Date.now();
+  t.items.forEach((it, i) => { if (timed(t, i) && !t.served[i] && itemDue(t, i, now) > now) delete t.notified['i' + i]; });
+}
+let wakeLock = null;
+async function updateWakeLock() {
+  const need = S.tables.length > 0 && document.visibilityState === 'visible';
+  if (need && !wakeLock && 'wakeLock' in navigator) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; $('#wl').style.display = 'none'; }); } catch { }
+  } else if (!need && wakeLock) { try { await wakeLock.release(); } catch { } wakeLock = null; }
+  $('#wl').style.display = wakeLock ? 'inline' : 'none';
+}
+document.addEventListener('visibilitychange', () => { updateWakeLock(); if (document.visibilityState === 'visible') tick(); });
+
+/* ========== レシピ ========== */
+function viewRecipes() {
+  return `<input type="search" id="q" placeholder="料理名・材料・メモで検索" value="${esc(S.q)}" autocomplete="off">
+    <div class="chips mt">${['', ...CATS].map(c => `<button class="chip ${S.cat === c ? 'on' : ''}" data-act="cat" data-c="${c}">${c || 'すべて'}</button>`).join('')}</div>
+    <div id="rlist"></div>
+    <button class="fab" data-act="newRecipe" aria-label="レシピを追加">${ICON_PLUS}</button>`;
+}
+function usedInOf(r) {
+  const s = new Set(r.usedIn || []);
+  for (const c of S.courses) if (c.items.some(it => it.recipeRef === r.id)) s.add(c.name);
+  for (const x of S.recipes) if (x.ingredients?.some(g => g.recipeRef === r.id)) s.add(x.name);
+  return [...s];
+}
+function recipeListHtml() {
+  const q = norm(S.q);
+  const list = S.recipes.filter(r => (!S.cat || r.category === S.cat) && (!q ||
+    norm(r.name).includes(q) || norm(r.memo).includes(q) || (r.ingredients || []).some(g => norm(g.name).includes(q) || norm(g.note).includes(q))))
+    .sort((a, b) => CATS.indexOf(a.category) - CATS.indexOf(b.category) || a.name.localeCompare(b.name, 'ja'));
+  if (!S.recipes.length) return `<div class="card empty">レシピがありません<br><span class="small">設定 →「一括取り込み」で recipes_import.json を読み込めます</span><br><button class="btn mt" data-act="openSettings">設定を開く</button></div>`;
+  if (!list.length) return `<div class="card empty">見つかりません</div>`;
+  return `<div class="card">${list.map(r => {
+    const u = usedInOf(r);
+    return `<div class="rrow" data-act="openRecipe" data-id="${r.id}">
+      ${r.photos?.length ? `<img src="${r.photos[0]}" alt="">` : '<div class="ph"></div>'}
+      <div class="grow"><div><b>${esc(r.name)}</b></div><div class="xs muted"><span class="badge ${r.category === 'コース' ? 'gold' : ''}">${r.category}</span> ${esc(u.join('・'))}</div></div></div>`;
+  }).join('')}</div>`;
+}
+function newRecipe(cat = '単品', name = '') {
+  return { id: uid('r'), name, category: cat, base: { type: cat === 'コース' ? 'servings' : 'ratio', value: cat === 'コース' ? 1 : 1 }, ingredients: [], steps: [], photos: [], memo: '', usedIn: [] };
+}
+
+/* ========== シート定義 ========== */
+const SHEETS = {
+  recipe(sh) {
+    const r = recipeById(sh.id);
+    if (!r) return { title: '不明', body: '<div class="empty">削除されたレシピです</div>' };
+    const servings = r.base?.type === 'servings';
+    const baseV = r.base?.value || 1;
+    if (sh.people == null) sh.people = baseV;
+    if (sh.ratio == null) sh.ratio = 1;
+    const factor = servings ? sh.people / baseV : sh.ratio;
+    const scale = servings
+      ? `<div class="row"><span class="grow small muted">基準 ${baseV}人前 → </span><div class="stepper"><button data-act="ppl" data-d="-1">−</button><span class="v">${sh.people}<span class="small">人</span></span><button data-act="ppl" data-d="1">＋</button></div></div>`
+      : `<div class="row wrap"><span class="small muted">倍率</span>${[0.5, 1, 1.5, 2, 3].map(x => `<button class="chip ${sh.ratio === x ? 'on' : ''}" data-act="ratio" data-v="${x}">×${x}</button>`).join('')}
+         <input type="number" step="0.1" min="0.1" inputmode="decimal" id="ratioIn" value="${sh.ratio}" style="width:78px;min-height:36px"></div>`;
+    const ings = (r.ingredients || []).map(g => {
+      const a = fmtAmount(g.amount, g.unit, factor);
+      const link = g.recipeRef && recipeById(g.recipeRef) ? ` <button class="link small" data-act="openRecipe" data-id="${g.recipeRef}">仕込み→</button>` : '';
+      return `<div class="ing"><div class="grow"><b style="font-weight:600">${esc(g.name)}</b>${link}${g.note ? `<div class="xs muted">${esc(g.note)}</div>` : ''}</div>
+        <div class="a">${a ? esc(a) : ''}</div></div>`;
+    }).join('');
+    const u = usedInOf(r);
+    return {
+      title: esc(r.name),
+      right: `<button class="btn sm" data-act="editRecipe" data-id="${r.id}">編集</button>`,
+      body: `<div class="row wrap small"><span class="badge ${r.category === 'コース' ? 'gold' : ''}">${r.category}</span>${u.map(x => `<span class="badge">${esc(x)}</span>`).join('')}</div>
+        ${sh.from ? `<div class="info">${esc(sh.from)}</div>` : ''}
+        <div class="card scale mt">${scale}</div>
+        ${r.photos?.length ? `<div class="photos mt">${r.photos.map((p, i) => `<img src="${p}" data-act="photo" data-id="${r.id}" data-i="${i}" alt="">`).join('')}</div>` : ''}
+        <h3>材料${factor !== 1 ? `（×${+factor.toFixed(3)}）` : ''}</h3>
+        <div class="card">${ings || '<div class="empty small">材料なし</div>'}</div>
+        ${r.steps?.length ? `<h3>手順</h3><div class="card"><ol class="steps">${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
+        ${r.memo ? `<h3>メモ</h3><div class="card memo">${esc(r.memo)}</div>` : ''}
+        <p class="xs muted mt">更新 ${r.updatedAt ? new Date(r.updatedAt).toLocaleString('ja-JP') : '—'}</p>`
+    };
+  },
+  photo(sh) {
+    const r = recipeById(sh.id);
+    return { title: '写真', body: `<img class="full" src="${r.photos[sh.i]}" alt="">` };
+  },
+  editRecipe(sh) {
+    const r = sh.draft;
+    const linkable = S.recipes.filter(x => x.id !== r.id && (x.category === '仕込み' || x.category === '調味料'));
+    return {
+      title: sh.isNew ? 'レシピを追加' : 'レシピを編集',
+      right: `<button class="btn sm" data-act="saveRecipe">保存</button>`,
+      body: `<label class="f">料理名<input type="text" id="e_name" value="${esc(r.name)}"></label>
+        <div class="row">
+          <label class="f grow">カテゴリ<select id="e_cat">${CATS.map(c => `<option ${r.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+          <label class="f" style="width:42%">基準量<select id="e_btype"><option value="servings" ${r.base.type === 'servings' ? 'selected' : ''}>人数</option><option value="ratio" ${r.base.type === 'ratio' ? 'selected' : ''}>倍率（仕込み量）</option></select></label>
+        </div>
+        <label class="f" ${r.base.type === 'servings' ? '' : 'hidden'}>基準人数<input type="number" id="e_bval" min="1" inputmode="numeric" value="${r.base.value}"></label>
+        <h3>材料 <span class="xs">（分量は数値か 1/8 のような分数。空欄＝換算しない）</span></h3>
+        ${r.ingredients.map((g, i) => `<div class="edrow" data-ing="${i}">
+          <div class="g"><input type="text" class="i_name" placeholder="材料名" value="${esc(g.name)}"><input type="text" class="i_amt" inputmode="decimal" placeholder="分量" value="${g.amount == null ? '' : esc(fracInput(g.amount))}"><input type="text" class="i_unit" placeholder="単位" value="${esc(g.unit || '')}"></div>
+          <div class="g2"><input type="text" class="i_note" placeholder="メモ（適量・切り方など）" value="${esc(g.note || '')}">
+            <select class="i_ref"><option value="">仕込みレシピ連携なし</option>${linkable.map(x => `<option value="${x.id}" ${g.recipeRef === x.id ? 'selected' : ''}>→ ${esc(x.name)}</option>`).join('')}</select></div>
+          <div class="row mt" style="margin-top:6px"><button class="btn sm" data-act="ingUp" data-i="${i}">↑</button><button class="btn sm" data-act="ingToPrep" data-i="${i}">仕込みレシピに切り出す</button><span class="grow"></span><button class="btn sm danger" data-act="ingDel" data-i="${i}">削除</button></div>
+        </div>`).join('')}
+        <button class="btn block mt" data-act="ingAdd">＋ 材料を追加</button>
+        <label class="f">手順（1行に1手順）<textarea id="e_steps">${esc(r.steps.join('\n'))}</textarea></label>
+        <label class="f">メモ（セントラルキッチン製などもここに）<textarea id="e_memo" style="min-height:80px">${esc(r.memo)}</textarea></label>
+        <h3>写真</h3>
+        <div class="photos">${r.photos.map((p, i) => `<div style="position:relative"><img src="${p}" alt=""><button class="btn sm danger" style="position:absolute;right:4px;top:4px" data-act="photoDel" data-i="${i}">×</button></div>`).join('')}</div>
+        <button class="btn block mt" data-act="photoAdd">＋ 写真を追加</button>
+        ${sh.isNew ? '' : `<button class="btn block danger mt2" data-act="delRecipe">このレシピを削除</button>`}`
+    };
+  },
+  addTable(sh) {
+    const d = sh.draft;
+    return {
+      title: '卓を追加',
+      body: `<label class="f">卓番号・席名<input type="text" id="t_no" value="${esc(d.no)}" placeholder="例：3 / カウンター2"></label>
+        <label class="f">コース<select id="t_course">${S.courses.map(c => `<option value="${c.id}" ${d.courseId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+        <div class="f">人数</div><div class="stepper"><button data-act="tppl" data-d="-1">−</button><span class="v" id="t_ppl">${d.people}<span class="small">名</span></span><button data-act="tppl" data-d="1">＋</button></div>
+        ${S.courses.length ? '' : '<div class="warn">コースが未登録です。設定から一括取り込みかコース追加をしてください</div>'}
+        <button class="btn pri block mt2" data-act="startTable" data-mode="now" ${S.courses.length ? '' : 'disabled'}>今すぐ開始</button>
+        <div class="row mt"><input type="time" id="t_time" value="${d.time}" class="grow"><button class="btn" data-act="startTable" data-mode="time" ${S.courses.length ? '' : 'disabled'}>この時刻で開始</button></div>`
+    };
+  },
+  table(sh) {
+    const t = S.tables.find(x => x.id === sh.id);
+    if (!t) return { title: '終了した卓', body: '<div class="empty">この卓は終了しました</div>' };
+    const now = Date.now();
+    const lo = loAt(t);
+    const rows = t.items.map((it, i) => {
+      const served = t.served[i];
+      if (!timed(t, i)) {
+        return `<div class="item ${served ? 'done' : ''}"><span class="tm muted small">LO後</span><span class="grow nm" ${it.recipeRef ? `data-act="tableRecipe" data-t="${t.id}" data-i="${i}"` : ''}>${esc(it.name)} ${it.recipeRef ? '<span class="link xs">レシピ</span>' : ''}<div class="xs muted">${served ? '提供 ' + hm(served) : 'タイマーなし・手動で提供'}</div></span>
+          <button class="chk ${served ? 'on' : ''}" data-act="serve" data-t="${t.id}" data-i="${i}">${ICON_CHECK}</button></div>`;
+      }
+      const due = itemDue(t, i, now);
+      const over = !served && due <= now;
+      const late = !served && due > lo + 30000;
+      return `<div class="item ${served ? 'done' : ''} ${over ? 'over' : ''}"><span class="tm">${served ? hm(served) : hm(due)}</span>
+        <span class="grow nm" ${it.recipeRef ? `data-act="tableRecipe" data-t="${t.id}" data-i="${i}"` : ''}>${esc(it.name)} ${it.recipeRef ? '<span class="link xs">レシピ</span>' : ''}
+          <div class="xs muted">${served ? '提供済み' : t.pausedAt ? '一時停止中' : over ? `<b style="color:var(--red)">${cdStr(due - now)} 超過</b>` : `あと ${cdStr(due - now)}`} ・ ${it.offsetMin}分${late ? ' <span class="badge red">LOを過ぎます</span>' : ''}</div></span>
+        <button class="chk ${served ? 'on' : ''}" data-act="serve" data-t="${t.id}" data-i="${i}" aria-label="提供済">${ICON_CHECK}</button></div>`;
+    }).join('');
+    return {
+      title: `卓${esc(t.no)}　${esc(t.courseName)}`,
+      body: `<div class="card sec"><div class="row"><div class="grow"><div class="small muted">開始 ${hm(t.startAt)} ・ 経過 ${Math.floor((now - t.startAt) / 60000)}分</div>
+          <div><b>LO ${hm(lo)}</b> <span class="muted small">${lo > now ? `あと${Math.ceil((lo - now) / 60000)}分` : '済'}</span> ・ 終了 ${hm(endAt(t))}</div></div>
+          <div class="stepper"><button data-act="tblPpl" data-t="${t.id}" data-d="-1">−</button><span class="v">${t.people}<span class="small">名</span></span><button data-act="tblPpl" data-t="${t.id}" data-d="1">＋</button></div></div>
+          ${overLO(t, now) ? '<div class="warn">ずらしにより最後の料理がLO（105分）を過ぎます。LOと終了時刻は動きません</div>' : ''}
+          <div class="row wrap mt">
+            <button class="btn sm" data-act="shift" data-t="${t.id}" data-d="-5">−5分</button>
+            <button class="btn sm" data-act="shift" data-t="${t.id}" data-d="5">＋5分</button>
+            <button class="btn sm" data-act="shift" data-t="${t.id}" data-d="10">＋10分</button>
+            <span class="small muted">ずらし ${t.shiftMin >= 0 ? '+' : ''}${Math.round(t.shiftMin + pausedExtra(t, now))}分</span><span class="grow"></span>
+            <button class="btn sm ${t.pausedAt ? 'pri' : ''}" data-act="pause" data-t="${t.id}">${t.pausedAt ? '再開' : '一時停止'}</button>
+          </div></div>
+        <div class="card mt">${rows}</div>
+        <button class="btn block danger mt2" data-act="endTable" data-t="${t.id}">この卓を終了（一覧から外す）</button>`
+    };
+  },
+  shiftPreview(sh) {
+    const r = sh.result;
+    if (!r.dates.length) {
+      return {
+        title: '取り込み：日付を指定', body: `${r.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('')}
+        <div class="info">PDFから日付を読み取れませんでした。表の一番左の列の日付を指定してください。</div>
+        <label class="f">左端の列の日付<input type="date" id="baseDate"></label>
+        <button class="btn pri block mt" data-act="reparse">この日付で解析</button>`
+      };
+    }
+    const exists = S.shifts.find(w => w.weekStart === r.weekStart);
+    const ws = parseYmd(r.weekStart);
+    const head = r.dates.map(d => { const x = parseYmd(d); return `<th>${x.getMonth() + 1}/${x.getDate()}<br>${WD[x.getDay()]}</th>`; }).join('');
+    const body = r.staff.map(s => `<tr><td class="${isMe(s.name) ? 'me' : ''}">${s.support ? '＊' : ''}${esc(s.name)}${s.dept ? `<br><span class="xs muted">${esc(s.dept)}</span>` : ''}</td>${r.dates.map(d => { const x = s.shifts[d]; return `<td>${x ? `${fmtMin(x.start)}<br>${x.end != null ? fmtMin(x.end) : '?'}` : '<span class="muted">-</span>'}</td>`; }).join('')}</tr>`).join('');
+    const days = r.dates.filter(d => r.staff.some(s => s.shifts[d])).length;
+    return {
+      title: 'シフト取り込みの確認',
+      right: sh.viewOnly ? '' : `<button class="btn sm" data-act="saveShift">${exists ? '上書き保存' : '保存'}</button>`,
+      body: `<div class="small"><b>${ws.getMonth() + 1}/${ws.getDate()}（日）の週</b>　${r.staff.length}人・${days}日分 <span class="muted">${esc(sh.fileName)}</span></div>
+        ${exists && !sh.viewOnly ? `<div class="info">この週は ${new Date(exists.importedAt).toLocaleString('ja-JP')} に取り込み済みです。保存すると上書きします。</div>` : ''}
+        ${r.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('')}
+        <div class="scrollx mt"><table class="grid"><thead><tr><th>氏名</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+        <p class="xs muted">＊＝応援。00:00の退勤は24:00として表示しています。PDFと見比べて違っていれば保存せず戻ってください。</p>
+        ${sh.viewOnly ? '' : `<button class="btn pri block mt" data-act="saveShift">${exists ? '上書き保存' : '保存'}</button>`}`
+    };
+  },
+  week(sh) {
+    const w = S.shifts.find(x => x.weekStart === sh.w);
+    if (!w) return { title: '週', body: '' };
+    const v = SHEETS.shiftPreview({ result: { ...w, warnings: [] }, fileName: w.fileName, viewOnly: true }); v.title = 'シフト（週の一覧）'; return v;
+  },
+  settings() {
+    const weeks = [...S.shifts].sort((a, b) => b.weekStart.localeCompare(a.weekStart));
+    return {
+      title: '設定',
+      body: `<h3>自分の名前（シフト表の表記どおり）</h3>
+        <div class="row"><input type="text" id="myName" value="${esc(S.kv.myName)}" placeholder="例：諏訪園 響"><button class="btn" data-act="saveName">保存</button></div>
+        <h3>コース</h3>
+        <div class="card">${S.courses.map(c => `<div class="rrow" data-act="editCourse" data-id="${c.id}"><div class="grow"><b>${esc(c.name)}</b><div class="xs muted">${c.items.length}品・LO ${c.lastOrderMin}分・${c.durationMin}分制</div></div><span class="muted">›</span></div>`).join('') || '<div class="empty small">未登録</div>'}</div>
+        <button class="btn block mt" data-act="newCourse">＋ コースを追加</button>
+        <h3>データ</h3>
+        <button class="btn block" data-act="pickJson" data-mode="import">一括取り込み（recipes_import.json など）</button>
+        <p class="xs muted">同じIDのレシピ・コースは上書き、それ以外は追加されます。</p>
+        <button class="btn block mt" data-act="exportAll">バックアップを書き出す（写真込み）</button>
+        <button class="btn block mt" data-act="pickJson" data-mode="restore">バックアップから復元</button>
+        <h3>取り込み済みのシフト</h3>
+        <div class="card">${weeks.map(w => `<div class="rrow"><div class="grow" data-act="weekView" data-w="${w.weekStart}"><b>${w.weekStart.slice(5).replace('-', '/')} の週</b><div class="xs muted">${w.staff.length}人・${esc(w.fileName || '')}</div></div><button class="btn sm danger" data-act="delWeek" data-w="${w.weekStart}">削除</button></div>`).join('') || '<div class="empty small">なし</div>'}</div>
+        <p class="small muted mt2" style="text-align:center">箔ノート ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます</p>`
+    };
+  },
+  editCourse(sh) {
+    const c = sh.draft;
+    const opts = id => `<option value="">レシピなし</option>${S.recipes.map(r => `<option value="${r.id}" ${id === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}`;
+    return {
+      title: sh.isNew ? 'コースを追加' : 'コースを編集',
+      right: `<button class="btn sm" data-act="saveCourse">保存</button>`,
+      body: `<label class="f">コース名<input type="text" id="c_name" value="${esc(c.name)}"></label>
+        <div class="row"><label class="f grow">LO（開始から分）<input type="number" id="c_lo" value="${c.lastOrderMin}"></label><label class="f grow">コース時間（分）<input type="number" id="c_dur" value="${c.durationMin}"></label></div>
+        <h3>品目（メニュー表の順）</h3>
+        ${c.items.map((it, i) => `<div class="edrow" data-ci="${i}">
+          <input type="text" class="c_iname" value="${esc(it.name)}" placeholder="品目名">
+          <div class="g2"><select class="c_iref">${opts(it.recipeRef)}</select>
+            <div class="row"><input type="number" class="c_ioff" inputmode="numeric" value="${it.offsetMin ?? ''}" ${it.afterCourse ? 'disabled' : ''} placeholder="分"><span class="small">分後</span></div></div>
+          <div class="row" style="margin-top:6px"><label class="small row"><input type="checkbox" class="c_iafter" ${it.afterCourse ? 'checked' : ''}> 甘味（LO後・タイマーなし）</label><span class="grow"></span>
+            <button class="btn sm" data-act="ciUp" data-i="${i}">↑</button><button class="btn sm danger" data-act="ciDel" data-i="${i}">削除</button></div></div>`).join('')}
+        <button class="btn block mt" data-act="ciAdd">＋ 品目を追加</button>
+        <p class="xs muted">最後の料理はLO（${c.lastOrderMin}分）に合わせると、LOの通知と同時に知らせます。</p>
+        ${sh.isNew ? '' : '<button class="btn block danger mt2" data-act="delCourse">このコースを削除</button>'}`
+    };
+  },
+};
+const fracInput = v => { const s = fracStr(v); return Math.abs(parseAmount(s) - v) < 1e-6 ? s.replace('と', ' ') : String(v); };
+
+/* ========== フォーム取得 ========== */
+function collectRecipe(sh) {
+  const d = sh.draft;
+  d.name = $('#e_name').value.trim();
+  d.category = $('#e_cat').value;
+  d.base = { type: $('#e_btype').value, value: $('#e_btype').value === 'servings' ? Math.max(1, +$('#e_bval').value || 1) : 1 };
+  d.ingredients = [...document.querySelectorAll('[data-ing]')].map((el, i) => ({
+    ...d.ingredients[i],
+    name: el.querySelector('.i_name').value.trim(), amount: parseAmount(el.querySelector('.i_amt').value),
+    unit: el.querySelector('.i_unit').value.trim() || null, note: el.querySelector('.i_note').value.trim(),
+    recipeRef: el.querySelector('.i_ref').value || null,
+  }));
+  d.steps = $('#e_steps').value.split('\n').map(s => s.trim()).filter(Boolean);
+  d.memo = $('#e_memo').value.trim();
+}
+function collectCourse(sh) {
+  const c = sh.draft;
+  c.name = $('#c_name').value.trim();
+  c.lastOrderMin = +$('#c_lo').value || 105;
+  c.durationMin = +$('#c_dur').value || 120;
+  c.items = [...document.querySelectorAll('[data-ci]')].map(el => {
+    const after = el.querySelector('.c_iafter').checked;
+    const off = el.querySelector('.c_ioff').value;
+    return { name: el.querySelector('.c_iname').value.trim(), recipeRef: el.querySelector('.c_iref').value || null, offsetMin: after || off === '' ? null : +off, afterCourse: after || undefined };
+  });
+}
+
+/* ========== 取り込み・バックアップ ========== */
+function normRecipe(r) {
+  return {
+    id: String(r.id || uid('r')), name: String(r.name || '無題'), category: CATS.includes(r.category) ? r.category : '単品',
+    base: { type: r.base?.type === 'servings' ? 'servings' : 'ratio', value: +r.base?.value || 1 },
+    ingredients: (r.ingredients || []).map(g => ({ name: String(g.name || ''), amount: g.amount == null || g.amount === '' ? null : +g.amount, unit: g.unit || null, note: g.note || '', recipeRef: g.recipeRef || null })),
+    steps: (r.steps || []).map(String), photos: Array.isArray(r.photos) ? r.photos : [], memo: r.memo || '', usedIn: r.usedIn || [],
+    updatedAt: r.updatedAt || Date.now(),
+  };
+}
+function normCourse(c) {
+  return {
+    id: String(c.id || uid('c')), name: String(c.name || '無題'), price: c.price || null,
+    items: (c.items || []).map(it => ({ name: String(it.name || ''), recipeRef: it.recipeRef || null, offsetMin: it.afterCourse || it.offsetMin == null ? null : +it.offsetMin, afterCourse: it.afterCourse ? true : undefined })),
+    durationMin: +c.durationMin || 120, lastOrderMin: +c.lastOrderMin || 105,
+  };
+}
+async function importJson(obj, mode) {
+  if (mode === 'restore') {
+    if (obj.app !== 'haku-note-backup') { alert('バックアップファイルではありません'); return; }
+    if (!confirm('現在のデータをすべて置き換えて復元します。よろしいですか？')) return;
+    S.recipes = (obj.recipes || []).map(normRecipe); S.courses = (obj.courses || []).map(normCourse);
+    S.shifts = obj.shifts || []; S.tables = obj.tables || [];
+    await Promise.all([DB.replaceAll('recipes', S.recipes), DB.replaceAll('courses', S.courses), DB.replaceAll('shifts', S.shifts), DB.replaceAll('tables', S.tables)]);
+    for (const [k, v] of Object.entries(obj.kv || {})) await setKv(k, v);
+    toast('復元しました'); return;
+  }
+  const rs = (obj.recipes || []).map(normRecipe), cs = (obj.courses || []).map(normCourse);
+  if (!rs.length && !cs.length) { alert('レシピ・コースが見つかりません'); return; }
+  const upd = rs.filter(r => recipeById(r.id)).length + cs.filter(c => courseById(c.id)).length;
+  if (!confirm(`レシピ${rs.length}件・コース${cs.length}件を取り込みます。${upd ? `\n（うち${upd}件は既存データを上書き）` : ''}`)) return;
+  rs.forEach(r => { const old = recipeById(r.id); if (old && !r.photos.length) r.photos = old.photos || []; upsert(S.recipes, r); });
+  cs.forEach(c => upsert(S.courses, c));
+  await DB.putMany('recipes', rs); await DB.putMany('courses', cs);
+  if (obj.shifts) { obj.shifts.forEach(w => { const i = S.shifts.findIndex(x => x.weekStart === w.weekStart); if (i >= 0) S.shifts[i] = w; else S.shifts.push(w); }); await DB.putMany('shifts', obj.shifts); }
+  toast(`取り込みました（レシピ${rs.length}・コース${cs.length}）`);
+}
+function exportAll() {
+  const data = { app: 'haku-note-backup', version: APP_VERSION, build: APP_BUILD, exportedAt: new Date().toISOString(), recipes: S.recipes, courses: S.courses, shifts: S.shifts, tables: S.tables, kv: S.kv };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `haku-backup-${ymd(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function resizeImage(file, max = 1280) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src); res(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = rej; img.src = URL.createObjectURL(file);
+  });
+}
+
+/* ========== 操作 ========== */
+let jsonMode = 'import';
+const A = {
+  tab: el => { S.tab = el.dataset.tab; if (S.sheets.length) closeSheets(S.sheets.length); setTab(el.dataset.tab); },
+  back: () => closeSheet(),
+  openSettings: () => pushSheet({ type: 'settings' }),
+  day: el => { const d = parseYmd(S.day); d.setDate(d.getDate() + +el.dataset.d); S.day = ymd(d); render(); },
+  dayToday: () => { S.day = ymd(new Date()); render(); },
+  pickPdf: () => { $('#pdfIn').value = ''; $('#pdfIn').click(); },
+  weekView: el => pushSheet({ type: 'week', w: el.dataset.w }),
+  reparse: async () => {
+    const v = $('#baseDate').value; if (!v) return;
+    const sh = cur(); const r = await importPdf(sh.buf, sh.fileName, v); replaceSheet({ type: 'shiftPreview', ...r });
+  },
+  saveShift: async () => {
+    const sh = cur(); if (sh.type !== 'shiftPreview') return;
+    const r = sh.result;
+    const rec = { weekStart: r.weekStart, dates: r.dates, staff: r.staff, importedAt: Date.now(), fileName: sh.fileName };
+    const i = S.shifts.findIndex(w => w.weekStart === rec.weekStart);
+    if (i >= 0) S.shifts[i] = rec; else S.shifts.push(rec);
+    await DB.put('shifts', rec);
+    const today = ymd(new Date());
+    S.day = r.dates.includes(today) ? today : r.dates[0];
+    S.tab = 'today'; closeSheet(); toast('シフトを保存しました');
+  },
+  delWeek: async el => { if (!confirm('この週のシフトを削除しますか？')) return; S.shifts = S.shifts.filter(w => w.weekStart !== el.dataset.w); await DB.del('shifts', el.dataset.w); renderSheet(); },
+  saveName: async () => { await setKv('myName', $('#myName').value.trim()); toast('保存しました'); },
+
+  addTable: () => {
+    const used = new Set(S.tables.map(t => t.no));
+    let n = 1; while (used.has(String(n))) n++;
+    const d = new Date();
+    pushSheet({ type: 'addTable', draft: { no: String(n), courseId: S.kv.lastCourse && courseById(S.kv.lastCourse) ? S.kv.lastCourse : S.courses[0]?.id, people: 2, time: `${pad(d.getHours())}:${pad(d.getMinutes())}` } });
+  },
+  tppl: el => { const sh = cur(); sh.draft.no = $('#t_no').value; sh.draft.courseId = $('#t_course').value; sh.draft.time = $('#t_time').value; sh.draft.people = Math.max(1, sh.draft.people + +el.dataset.d); renderSheet(); },
+  startTable: async el => {
+    unlockAudio();
+    const sh = cur(); const c = courseById($('#t_course').value); if (!c) return;
+    let startAt = Date.now();
+    if (el.dataset.mode === 'time') {
+      const [h, m] = ($('#t_time').value || '').split(':').map(Number);
+      if (isNaN(h)) return;
+      const d = new Date(); d.setHours(h, m, 0, 0);
+      if (d - Date.now() > 12 * 36e5) d.setDate(d.getDate() - 1);
+      startAt = d.getTime();
+    }
+    const t = {
+      id: uid('t'), no: $('#t_no').value.trim() || '?', courseId: c.id, courseName: c.name, people: sh.draft.people, startAt,
+      items: c.items.map(it => ({ ...it })), durationMin: c.durationMin, lastOrderMin: c.lastOrderMin,
+      shiftMin: 0, pausedAt: null, served: {}, notified: {}, createdAt: Date.now(),
+    };
+    // 過去の開始時刻なら、すでに過ぎた通知は鳴らさない
+    const now = Date.now();
+    t.items.forEach((it, i) => { if (timed(t, i) && itemDue(t, i, now) < now - 180000) t.notified['i' + i] = 1; });
+    await saveTable(t); setKv('lastCourse', c.id);
+    S.tab = 'progress'; closeSheet(); updateWakeLock();
+  },
+  openTable: (el, ev) => { if (ev.target.closest('[data-act="serve"]')) return; pushSheet({ type: 'table', id: el.dataset.t }); },
+  serve: async (el, ev) => {
+    ev.stopPropagation();
+    const t = S.tables.find(x => x.id === el.dataset.t); const i = +el.dataset.i;
+    if (t.served[i]) delete t.served[i]; else t.served[i] = Date.now();
+    await saveTable(t);
+    S.alerts = S.alerts.filter(a => a.tableId !== t.id);
+    renderAlerts(); rerender();
+  },
+  shift: async el => {
+    const t = S.tables.find(x => x.id === el.dataset.t);
+    t.shiftMin += +el.dataset.d; resetNotified(t); await saveTable(t); rerender();
+  },
+  pause: async el => {
+    const t = S.tables.find(x => x.id === el.dataset.t);
+    if (t.pausedAt) { t.shiftMin += (Date.now() - t.pausedAt) / 60000; t.pausedAt = null; resetNotified(t); }
+    else t.pausedAt = Date.now();
+    await saveTable(t); rerender();
+  },
+  tblPpl: async el => { const t = S.tables.find(x => x.id === el.dataset.t); t.people = Math.max(1, t.people + +el.dataset.d); await saveTable(t); rerender(); },
+  endTable: async el => {
+    if (!confirm('この卓を終了して一覧から外しますか？')) return;
+    S.tables = S.tables.filter(x => x.id !== el.dataset.t); await DB.del('tables', el.dataset.t);
+    S.alerts = S.alerts.filter(a => a.tableId !== el.dataset.t); renderAlerts();
+    closeSheet(); updateWakeLock();
+  },
+  tableRecipe: el => {
+    const t = S.tables.find(x => x.id === el.dataset.t); const it = t.items[+el.dataset.i];
+    const r = recipeById(it.recipeRef); if (!r) { toast('レシピが見つかりません'); return; }
+    pushSheet({ type: 'recipe', id: r.id, people: r.base.type === 'servings' ? t.people : null, from: `卓${t.no}（${t.people}名）の分量で表示中` });
+  },
+  alertClose: el => { S.alerts = S.alerts.filter(a => a.id !== el.dataset.a); renderAlerts(); },
+  alertOpen: el => {
+    const a = S.alerts.find(x => x.id === el.dataset.a); S.alerts = S.alerts.filter(x => x !== a); renderAlerts();
+    if (a && S.tables.some(t => t.id === a.tableId) && !(cur()?.type === 'table' && cur().id === a.tableId)) pushSheet({ type: 'table', id: a.tableId });
+  },
+
+  cat: el => { S.cat = el.dataset.c; render(); },
+  openRecipe: el => pushSheet({ type: 'recipe', id: el.dataset.id }),
+  ppl: el => { const sh = cur(); sh.people = Math.max(1, sh.people + +el.dataset.d); renderSheet(); },
+  ratio: el => { cur().ratio = +el.dataset.v; renderSheet(); },
+  photo: el => pushSheet({ type: 'photo', id: el.dataset.id, i: +el.dataset.i }),
+  newRecipe: () => pushSheet({ type: 'editRecipe', isNew: true, draft: newRecipe(S.cat || '単品') }),
+  editRecipe: el => pushSheet({ type: 'editRecipe', draft: structuredClone(recipeById(el.dataset.id)) }),
+  ingAdd: () => { const sh = cur(); collectRecipe(sh); sh.draft.ingredients.push({ name: '', amount: null, unit: '', note: '', recipeRef: null }); renderSheet(); },
+  ingDel: el => { const sh = cur(); collectRecipe(sh); sh.draft.ingredients.splice(+el.dataset.i, 1); renderSheet(); },
+  ingUp: el => { const sh = cur(); collectRecipe(sh); const i = +el.dataset.i; if (i > 0) { const a = sh.draft.ingredients; [a[i - 1], a[i]] = [a[i], a[i - 1]]; } renderSheet(); },
+  ingToPrep: async el => {
+    const sh = cur(); collectRecipe(sh); const g = sh.draft.ingredients[+el.dataset.i];
+    if (!g.name) { toast('材料名を入れてください'); return; }
+    if (g.recipeRef) { toast('すでに連携済みです'); return; }
+    if (!confirm(`「${g.name}」を仕込みレシピとして新規作成し、この材料と連携します。`)) return;
+    const r = newRecipe('仕込み', g.name); r.memo = g.note || '';
+    await saveRecipe(r); g.recipeRef = r.id; renderSheet(); toast('仕込みレシピを作成しました（あとで中身を編集）');
+  },
+  photoAdd: () => { collectRecipe(cur()); $('#photoIn').value = ''; $('#photoIn').click(); },
+  photoDel: el => { const sh = cur(); collectRecipe(sh); sh.draft.photos.splice(+el.dataset.i, 1); renderSheet(); },
+  saveRecipe: async () => {
+    const sh = cur(); collectRecipe(sh);
+    if (!sh.draft.name) { toast('料理名を入れてください'); return; }
+    sh.draft.ingredients = sh.draft.ingredients.filter(g => g.name);
+    await saveRecipe(sh.draft); closeSheet(); toast('保存しました');
+  },
+  delRecipe: async () => {
+    const sh = cur(); if (!confirm(`「${sh.draft.name}」を削除しますか？`)) return;
+    S.recipes = S.recipes.filter(r => r.id !== sh.draft.id); await DB.del('recipes', sh.draft.id);
+    const below = S.sheets[S.sheets.length - 2]; closeSheets(below && below.type === 'recipe' && below.id === sh.draft.id ? 2 : 1);
+  },
+
+  newCourse: () => pushSheet({ type: 'editCourse', isNew: true, draft: { id: uid('c'), name: '', items: [], durationMin: 120, lastOrderMin: 105 } }),
+  editCourse: el => pushSheet({ type: 'editCourse', draft: structuredClone(courseById(el.dataset.id)) }),
+  ciAdd: () => { const sh = cur(); collectCourse(sh); const last = sh.draft.items.filter(i => i.offsetMin != null).pop(); sh.draft.items.push({ name: '', recipeRef: null, offsetMin: last ? last.offsetMin + 15 : 0 }); renderSheet(); },
+  ciDel: el => { const sh = cur(); collectCourse(sh); sh.draft.items.splice(+el.dataset.i, 1); renderSheet(); },
+  ciUp: el => { const sh = cur(); collectCourse(sh); const i = +el.dataset.i; if (i > 0) { const a = sh.draft.items; [a[i - 1], a[i]] = [a[i], a[i - 1]]; } renderSheet(); },
+  saveCourse: async () => {
+    const sh = cur(); collectCourse(sh);
+    if (!sh.draft.name) { toast('コース名を入れてください'); return; }
+    sh.draft.items = sh.draft.items.filter(i => i.name);
+    await saveCourse(normCourse(sh.draft)); closeSheet(); toast('保存しました（進行中の卓には影響しません）');
+  },
+  delCourse: async () => {
+    const sh = cur(); if (!confirm(`「${sh.draft.name}」を削除しますか？`)) return;
+    S.courses = S.courses.filter(c => c.id !== sh.draft.id); await DB.del('courses', sh.draft.id); closeSheet();
+  },
+  pickJson: el => { jsonMode = el.dataset.mode; $('#jsonIn').value = ''; $('#jsonIn').click(); },
+  exportAll: () => exportAll(),
+};
+function rerender() {
+  if (S.sheets.length) { const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; }
+  else { const y = scrollY; render(); scrollTo(0, y); }
+  updateTabDot();
+}
+
+document.addEventListener('click', ev => {
+  unlockAudio();
+  const el = ev.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = A[el.dataset.act];
+  if (fn) fn(el, ev);
+});
+document.addEventListener('input', ev => {
+  if (ev.target.id === 'q') { S.q = ev.target.value; $('#rlist').innerHTML = recipeListHtml(); }
+  if (ev.target.id === 'ratioIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().ratio = v; const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; const i = $('#ratioIn'); i.focus(); i.setSelectionRange?.(99, 99); } }
+});
+document.addEventListener('change', ev => {
+  if (ev.target.id === 'e_btype') { collectRecipe(cur()); renderSheet(); }
+  if (ev.target.classList.contains('c_iafter')) { collectCourse(cur()); renderSheet(); }
+});
+$('#pdfIn').addEventListener('change', e => { const f = e.target.files[0]; if (f) onPdfChosen(f); });
+$('#jsonIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { await importJson(JSON.parse(await f.text()), jsonMode); renderSheet(); render(); }
+  catch (err) { alert('読み込めませんでした\n' + err.message); }
+});
+$('#photoIn').addEventListener('change', async e => {
+  const sh = cur(); if (!sh || sh.type !== 'editRecipe') return;
+  for (const f of e.target.files) { try { sh.draft.photos.push(await resizeImage(f)); } catch { } }
+  renderSheet();
+});
+/* スワイプで日付移動 */
+let sx = null, sy = 0;
+$('#main').addEventListener('touchstart', e => { if (S.tab !== 'today') return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+$('#main').addEventListener('touchend', e => {
+  if (sx == null || S.tab !== 'today') return;
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+  if (Math.abs(dx) > 70 && Math.abs(dy) < 50) A.day({ dataset: { d: dx < 0 ? 1 : -1 } });
+});
+
+(async () => {
+  await DB.open();
+  await loadAll();
+  render();
+  setInterval(tick, 1000);
+  updateWakeLock();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+*.pdf
+recipes_import.json
+*.md
+.claude/

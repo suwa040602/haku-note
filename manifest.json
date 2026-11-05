@@ -1,0 +1,15 @@
+{
+  "name": "箔ノート",
+  "short_name": "箔ノート",
+  "description": "すしと酒-箔- のレシピ・コース進行・シフト確認",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1d1a16",
+  "theme_color": "#1d1a16",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
