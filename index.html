@@ -529,7 +529,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 5;
+const APP_VERSION = 'v1.3', APP_BUILD = 6;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -652,11 +652,6 @@ function yieldOf(r) {
   return { amount: vol + wgt, unit: vol >= wgt ? 'cc' : 'g', auto: true, approx: true }; // 1cc≒1gとして概算
 }
 const roundNice = v => v >= 100 ? Math.round(v / 10) * 10 : v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
-function yieldPresets(y) {
-  const b = y.amount;
-  const steps = b >= 400 ? [250, 500, 1000, 1500, 2000] : b >= 100 ? [100, 200, 300, 500, 1000] : [50, 100, 200, 300];
-  return steps;
-}
 
 /* ========== 画面ルーティング ========== */
 function setTab(t) { S.tab = t; render(); window.scrollTo(0, 0); }
@@ -946,25 +941,28 @@ const SHEETS = {
     const baseV = r.base?.value || 1;
     if (sh.people == null) sh.people = baseV;
     if (sh.ratio == null) sh.ratio = 1;
-    const y = servings ? null : yieldOf(r);
+    // 単品は換算しない（倍率欄を出さない）
+    const fixed = r.category === '単品';
+    const y = servings || fixed ? null : yieldOf(r);
     if (!sh.mode) sh.mode = 'ratio';
     if (sh.mode === 'yield' && !y) sh.mode = 'ratio';
     if (y && sh.target == null) sh.target = roundNice(y.amount * sh.ratio);
-    const factor = servings ? sh.people / baseV : sh.mode === 'yield' ? (sh.target > 0 ? sh.target / y.amount : 1) : sh.ratio;
+    const factor = fixed ? 1 : servings ? sh.people / baseV : sh.mode === 'yield' ? (sh.target > 0 ? sh.target / y.amount : 1) : sh.ratio;
     const yieldTxt = y ? `${y.approx ? '約' : ''}${fmtAmount(y.amount, y.unit, factor)}` : '';
-    const modeTabs = `<div class="chips" style="padding-bottom:8px"><button class="chip ${sh.mode === 'ratio' ? 'on' : ''}" data-act="scaleMode" data-m="ratio">倍率で指定</button>
-      <button class="chip ${sh.mode === 'yield' ? 'on' : ''}" data-act="scaleMode" data-m="yield" ${y ? '' : 'disabled style="opacity:.45"'}>完成量で指定</button></div>`;
-    const scale = servings
+    const modeTabs = `<div class="chips" style="padding-bottom:8px"><button class="chip ${sh.mode === 'ratio' ? 'on' : ''}" data-act="scaleMode" data-m="ratio">倍率</button>
+      <button class="chip ${sh.mode === 'yield' ? 'on' : ''}" data-act="scaleMode" data-m="yield" ${y ? '' : 'disabled style="opacity:.45"'}>完成量</button></div>`;
+    // 入力中に書き換える部分には id を付ける（入力欄ごと作り直すとカーソルが飛ぶため）
+    const scale = fixed ? ''
+      : servings
       ? `<div class="row"><span class="grow small muted">基準 ${baseV}人前 → </span><div class="stepper"><button data-act="ppl" data-d="-1">−</button><span class="v">${sh.people}<span class="small">人</span></span><button data-act="ppl" data-d="1">＋</button></div></div>`
       : sh.mode === 'yield'
         ? `${modeTabs}<div class="row wrap"><span class="small muted">作りたい量</span>
             <input type="number" step="any" min="0" inputmode="decimal" id="yieldIn" value="${sh.target}" style="width:96px;min-height:40px;font-weight:700"><b>${esc(y.unit)}</b>
-            <span class="grow"></span><span class="small muted">×${+factor.toFixed(3)}</span></div>
-           <div class="row wrap" style="margin-top:6px">${yieldPresets(y).map(v => `<button class="chip ${sh.target === v ? 'on' : ''}" data-act="yieldPick" data-v="${v}">${v}${esc(y.unit)}</button>`).join('')}</div>
+            <span class="grow"></span><span class="small muted" id="rFactor">×${+factor.toFixed(3)}</span></div>
            <div class="xs muted" style="margin-top:6px">基準（×1）の完成量：${y.approx ? '約' : ''}${fmtAmount(y.amount, y.unit)}${y.auto ? '（材料から自動計算）' : ''}</div>`
-        : `${modeTabs}<div class="row wrap"><span class="small muted">倍率</span>${[0.5, 1, 1.5, 2, 3].map(x => `<button class="chip ${sh.ratio === x ? 'on' : ''}" data-act="ratio" data-v="${x}">×${x}</button>`).join('')}
+        : `${modeTabs}<div class="row wrap"><span class="small muted">倍率</span><span id="rChips" class="row" style="gap:6px">${[0.5, 1, 1.5, 2, 3].map(x => `<button class="chip ${sh.ratio === x ? 'on' : ''}" data-act="ratio" data-v="${x}">×${x}</button>`).join('')}</span>
          <input type="number" step="0.1" min="0.1" inputmode="decimal" id="ratioIn" value="${sh.ratio}" style="width:78px;min-height:36px"></div>
-         ${y ? `<div class="xs muted" style="margin-top:6px">完成量：${yieldTxt}${y.auto ? '（材料から自動計算）' : ''}</div>` : `<div class="xs muted" style="margin-top:6px">完成量で指定するには、編集で「完成量」を入れてください</div>`}`;
+         ${y ? `<div class="xs muted" style="margin-top:6px" id="rYield">完成量：${yieldTxt}${y.auto ? '（材料から自動計算）' : ''}</div>` : `<div class="xs muted" style="margin-top:6px">完成量で計算するには、編集で「完成量」を入れてください</div>`}`;
     const ings = (r.ingredients || []).map(g => {
       const a = fmtAmount(g.amount, g.unit, factor);
       const link = g.recipeRef && recipeById(g.recipeRef) ? ` <button class="link small" data-act="openRecipe" data-id="${g.recipeRef}">仕込み→</button>` : '';
@@ -977,10 +975,10 @@ const SHEETS = {
       right: `<button class="btn sm" data-act="editRecipe" data-id="${r.id}">編集</button>`,
       body: `<div class="row wrap small"><span class="badge ${r.category === 'コース' ? 'gold' : ''}">${r.category}</span>${u.map(x => `<span class="badge">${esc(x)}</span>`).join('')}</div>
         ${sh.from ? `<div class="info">${esc(sh.from)}</div>` : ''}
-        <div class="card scale mt">${scale}</div>
+        ${scale ? `<div class="card scale mt">${scale}</div>` : ''}
         ${r.photos?.length ? `<div class="photos mt">${r.photos.map((p, i) => `<img src="${p}" data-act="photo" data-id="${r.id}" data-i="${i}" alt="">`).join('')}</div>` : ''}
-        <h3>材料${factor !== 1 ? `（×${+factor.toFixed(3)}）` : ''}</h3>
-        <div class="card">${ings || '<div class="empty small">材料なし</div>'}</div>
+        <div id="rIngs"><h3>材料${factor !== 1 ? `（×${+factor.toFixed(3)}）` : ''}</h3>
+        <div class="card">${ings || '<div class="empty small">材料なし</div>'}</div></div>
         ${r.steps?.length ? `<h3>手順</h3><div class="card"><ol class="steps">${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
         ${r.memo ? `<h3>メモ</h3><div class="card memo">${esc(r.memo)}</div>` : ''}
         <p class="xs muted mt">更新 ${r.updatedAt ? new Date(r.updatedAt).toLocaleString('ja-JP') : '—'}</p>`
@@ -1335,7 +1333,6 @@ const A = {
     if (el.dataset.m === 'ratio' && sh.mode === 'yield' && sh.target > 0) sh.ratio = Math.round(sh.target / y.amount * 100) / 100;
     sh.mode = el.dataset.m; renderSheet();
   },
-  yieldPick: el => { cur().target = +el.dataset.v; renderSheet(); },
   photo: el => pushSheet({ type: 'photo', id: el.dataset.id, i: +el.dataset.i }),
   newRecipe: () => pushSheet({ type: 'editRecipe', isNew: true, draft: newRecipe(S.cat || '単品') }),
   editRecipe: el => pushSheet({ type: 'editRecipe', draft: structuredClone(recipeById(el.dataset.id)) }),
@@ -1382,6 +1379,15 @@ const A = {
   pickJson: el => { jsonMode = el.dataset.mode; $('#jsonIn').value = ''; $('#jsonIn').click(); },
   exportAll: () => exportAll(),
 };
+// レシピ画面の一部だけを描き直す（入力欄は触らないのでカーソル位置がそのまま）
+function patchRecipe(ids) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = SHEETS.recipe(cur()).body;
+  for (const id of ids) {
+    const now = document.getElementById(id), next = tmp.querySelector('#' + id);
+    if (now && next) now.replaceWith(next);
+  }
+}
 function rerender() {
   if (S.sheets.length) { const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; }
   else { const y = scrollY; render(); scrollTo(0, y); }
@@ -1397,8 +1403,8 @@ document.addEventListener('click', ev => {
 });
 document.addEventListener('input', ev => {
   if (ev.target.id === 'q') { S.q = ev.target.value; $('#rlist').innerHTML = recipeListHtml(); }
-  if (ev.target.id === 'yieldIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().target = v; const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; const i = $('#yieldIn'); i.focus(); } }
-  if (ev.target.id === 'ratioIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().ratio = v; const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; const i = $('#ratioIn'); i.focus(); i.setSelectionRange?.(99, 99); } }
+  if (ev.target.id === 'yieldIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().target = v; patchRecipe(['rFactor', 'rIngs']); } }
+  if (ev.target.id === 'ratioIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().ratio = v; patchRecipe(['rChips', 'rYield', 'rIngs']); } }
 });
 document.addEventListener('change', ev => {
   if (ev.target.id === 'e_btype') { collectRecipe(cur()); renderSheet(); }
