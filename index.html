@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1d1a16">
+<!-- 個人用：検索エンジンに載せない・URLを外部に渡さない -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="referrer" content="no-referrer">
 <title>箔</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -502,7 +505,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.2', APP_BUILD = 3;
+const APP_VERSION = 'v1.2', APP_BUILD = 4;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
