@@ -501,7 +501,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.0', APP_BUILD = 1;
+const APP_VERSION = 'v1.1', APP_BUILD = 2;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -602,6 +602,32 @@ function fmtAmount(amount, unit, factor = 1) {
   if (/^(大さじ|小さじ|カップ)$/.test(u)) return u + (Math.round(v * 2) / 2);
   if (COUNT_UNITS.test(u)) return fracStr(v) + u;
   return +(Math.round(v * 100) / 100) + u;
+}
+
+/* --- 完成量（倍率×1のときにできる量） --- */
+const VOL = { cc: 1, 'ｃｃ': 1, '㏄': 1, ml: 1, mL: 1, ML: 1, L: 1000, l: 1000, 'リットル': 1000, '大さじ': 15, '小さじ': 5, 'カップ': 200 };
+const WGT = { g: 1, 'ｇ': 1, 'グラム': 1, kg: 1000 };
+// 登録された完成量、なければ材料（cc・g系）の合計から推定
+function yieldOf(r) {
+  if (r.yield && r.yield.amount > 0) return { amount: r.yield.amount, unit: r.yield.unit || 'g', auto: false };
+  let vol = 0, wgt = 0, nv = 0, nw = 0;
+  for (const g of r.ingredients || []) {
+    if (g.amount == null) continue;
+    const u = g.unit || '';
+    if (u in VOL) { vol += g.amount * VOL[u]; nv++; }
+    else if (u in WGT) { wgt += g.amount * WGT[u]; nw++; }
+    else return null; // 個・枚など重さに直せない材料がある
+  }
+  if (!nv && !nw) return null;
+  if (nv && !nw) return { amount: vol, unit: 'cc', auto: true };
+  if (nw && !nv) return { amount: wgt, unit: 'g', auto: true };
+  return { amount: vol + wgt, unit: vol >= wgt ? 'cc' : 'g', auto: true, approx: true }; // 1cc≒1gとして概算
+}
+const roundNice = v => v >= 100 ? Math.round(v / 10) * 10 : v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
+function yieldPresets(y) {
+  const b = y.amount;
+  const steps = b >= 400 ? [250, 500, 1000, 1500, 2000] : b >= 100 ? [100, 200, 300, 500, 1000] : [50, 100, 200, 300];
+  return steps;
 }
 
 /* ========== 画面ルーティング ========== */
@@ -892,11 +918,25 @@ const SHEETS = {
     const baseV = r.base?.value || 1;
     if (sh.people == null) sh.people = baseV;
     if (sh.ratio == null) sh.ratio = 1;
-    const factor = servings ? sh.people / baseV : sh.ratio;
+    const y = servings ? null : yieldOf(r);
+    if (!sh.mode) sh.mode = 'ratio';
+    if (sh.mode === 'yield' && !y) sh.mode = 'ratio';
+    if (y && sh.target == null) sh.target = roundNice(y.amount * sh.ratio);
+    const factor = servings ? sh.people / baseV : sh.mode === 'yield' ? (sh.target > 0 ? sh.target / y.amount : 1) : sh.ratio;
+    const yieldTxt = y ? `${y.approx ? '約' : ''}${fmtAmount(y.amount, y.unit, factor)}` : '';
+    const modeTabs = `<div class="chips" style="padding-bottom:8px"><button class="chip ${sh.mode === 'ratio' ? 'on' : ''}" data-act="scaleMode" data-m="ratio">倍率で指定</button>
+      <button class="chip ${sh.mode === 'yield' ? 'on' : ''}" data-act="scaleMode" data-m="yield" ${y ? '' : 'disabled style="opacity:.45"'}>完成量で指定</button></div>`;
     const scale = servings
       ? `<div class="row"><span class="grow small muted">基準 ${baseV}人前 → </span><div class="stepper"><button data-act="ppl" data-d="-1">−</button><span class="v">${sh.people}<span class="small">人</span></span><button data-act="ppl" data-d="1">＋</button></div></div>`
-      : `<div class="row wrap"><span class="small muted">倍率</span>${[0.5, 1, 1.5, 2, 3].map(x => `<button class="chip ${sh.ratio === x ? 'on' : ''}" data-act="ratio" data-v="${x}">×${x}</button>`).join('')}
-         <input type="number" step="0.1" min="0.1" inputmode="decimal" id="ratioIn" value="${sh.ratio}" style="width:78px;min-height:36px"></div>`;
+      : sh.mode === 'yield'
+        ? `${modeTabs}<div class="row wrap"><span class="small muted">作りたい量</span>
+            <input type="number" step="any" min="0" inputmode="decimal" id="yieldIn" value="${sh.target}" style="width:96px;min-height:40px;font-weight:700"><b>${esc(y.unit)}</b>
+            <span class="grow"></span><span class="small muted">×${+factor.toFixed(3)}</span></div>
+           <div class="row wrap" style="margin-top:6px">${yieldPresets(y).map(v => `<button class="chip ${sh.target === v ? 'on' : ''}" data-act="yieldPick" data-v="${v}">${v}${esc(y.unit)}</button>`).join('')}</div>
+           <div class="xs muted" style="margin-top:6px">基準（×1）の完成量：${y.approx ? '約' : ''}${fmtAmount(y.amount, y.unit)}${y.auto ? '（材料から自動計算）' : ''}</div>`
+        : `${modeTabs}<div class="row wrap"><span class="small muted">倍率</span>${[0.5, 1, 1.5, 2, 3].map(x => `<button class="chip ${sh.ratio === x ? 'on' : ''}" data-act="ratio" data-v="${x}">×${x}</button>`).join('')}
+         <input type="number" step="0.1" min="0.1" inputmode="decimal" id="ratioIn" value="${sh.ratio}" style="width:78px;min-height:36px"></div>
+         ${y ? `<div class="xs muted" style="margin-top:6px">完成量：${yieldTxt}${y.auto ? '（材料から自動計算）' : ''}</div>` : `<div class="xs muted" style="margin-top:6px">完成量で指定するには、編集で「完成量」を入れてください</div>`}`;
     const ings = (r.ingredients || []).map(g => {
       const a = fmtAmount(g.amount, g.unit, factor);
       const link = g.recipeRef && recipeById(g.recipeRef) ? ` <button class="link small" data-act="openRecipe" data-id="${g.recipeRef}">仕込み→</button>` : '';
@@ -934,6 +974,10 @@ const SHEETS = {
           <label class="f" style="width:42%">基準量<select id="e_btype"><option value="servings" ${r.base.type === 'servings' ? 'selected' : ''}>人数</option><option value="ratio" ${r.base.type === 'ratio' ? 'selected' : ''}>倍率（仕込み量）</option></select></label>
         </div>
         <label class="f" ${r.base.type === 'servings' ? '' : 'hidden'}>基準人数<input type="number" id="e_bval" min="1" inputmode="numeric" value="${r.base.value}"></label>
+        <div ${r.base.type === 'servings' ? 'hidden' : ''}><div class="f">完成量（このレシピ×1でできる量・任意）</div>
+          <div class="row" style="margin-top:4px"><input type="text" id="e_yamt" inputmode="decimal" placeholder="${(() => { const a = yieldOf({ ...r, yield: null }); return a ? `空欄なら約${roundNice(a.amount)}${a.unit}（材料の合計）` : '例：500'; })()}" value="${r.yield?.amount ?? ''}" class="grow">
+          <select id="e_yunit" style="width:90px">${['cc', 'g', 'ml', 'kg', 'L', '個', '人前'].map(u => `<option ${(r.yield?.unit || 'cc') === u ? 'selected' : ''}>${u}</option>`).join('')}</select></div>
+          <div class="xs muted" style="margin-top:4px">煮詰める・漉すなどで材料の合計と完成量が違うときは入れてください</div></div>
         <h3>材料 <span class="xs">（分量は数値か 1/8 のような分数。空欄＝換算しない）</span></h3>
         ${r.ingredients.map((g, i) => `<div class="edrow" data-ing="${i}">
           <div class="g"><input type="text" class="i_name" placeholder="材料名" value="${esc(g.name)}"><input type="text" class="i_amt" inputmode="decimal" placeholder="分量" value="${g.amount == null ? '' : esc(fracInput(g.amount))}"><input type="text" class="i_unit" placeholder="単位" value="${esc(g.unit || '')}"></div>
@@ -1077,6 +1121,8 @@ function collectRecipe(sh) {
   d.name = $('#e_name').value.trim();
   d.category = $('#e_cat').value;
   d.base = { type: $('#e_btype').value, value: $('#e_btype').value === 'servings' ? Math.max(1, +$('#e_bval').value || 1) : 1 };
+  const ya = parseAmount($('#e_yamt').value);
+  d.yield = d.base.type === 'ratio' && ya > 0 ? { amount: ya, unit: $('#e_yunit').value } : null;
   d.ingredients = [...document.querySelectorAll('[data-ing]')].map((el, i) => ({
     ...d.ingredients[i],
     name: el.querySelector('.i_name').value.trim(), amount: parseAmount(el.querySelector('.i_amt').value),
@@ -1104,6 +1150,7 @@ function normRecipe(r) {
     id: String(r.id || uid('r')), name: String(r.name || '無題'), category: CATS.includes(r.category) ? r.category : '単品',
     base: { type: r.base?.type === 'servings' ? 'servings' : 'ratio', value: +r.base?.value || 1 },
     ingredients: (r.ingredients || []).map(g => ({ name: String(g.name || ''), amount: g.amount == null || g.amount === '' ? null : +g.amount, unit: g.unit || null, note: g.note || '', recipeRef: g.recipeRef || null })),
+    yield: r.yield && +r.yield.amount > 0 ? { amount: +r.yield.amount, unit: r.yield.unit || 'g' } : null,
     steps: (r.steps || []).map(String), photos: Array.isArray(r.photos) ? r.photos : [], memo: r.memo || '', usedIn: r.usedIn || [],
     updatedAt: r.updatedAt || Date.now(),
   };
@@ -1254,6 +1301,13 @@ const A = {
   openRecipe: el => pushSheet({ type: 'recipe', id: el.dataset.id }),
   ppl: el => { const sh = cur(); sh.people = Math.max(1, sh.people + +el.dataset.d); renderSheet(); },
   ratio: el => { cur().ratio = +el.dataset.v; renderSheet(); },
+  scaleMode: el => {
+    const sh = cur(), r = recipeById(sh.id), y = yieldOf(r); if (!y) return;
+    if (el.dataset.m === 'yield' && sh.mode !== 'yield') sh.target = roundNice(y.amount * sh.ratio);
+    if (el.dataset.m === 'ratio' && sh.mode === 'yield' && sh.target > 0) sh.ratio = Math.round(sh.target / y.amount * 100) / 100;
+    sh.mode = el.dataset.m; renderSheet();
+  },
+  yieldPick: el => { cur().target = +el.dataset.v; renderSheet(); },
   photo: el => pushSheet({ type: 'photo', id: el.dataset.id, i: +el.dataset.i }),
   newRecipe: () => pushSheet({ type: 'editRecipe', isNew: true, draft: newRecipe(S.cat || '単品') }),
   editRecipe: el => pushSheet({ type: 'editRecipe', draft: structuredClone(recipeById(el.dataset.id)) }),
@@ -1315,6 +1369,7 @@ document.addEventListener('click', ev => {
 });
 document.addEventListener('input', ev => {
   if (ev.target.id === 'q') { S.q = ev.target.value; $('#rlist').innerHTML = recipeListHtml(); }
+  if (ev.target.id === 'yieldIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().target = v; const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; const i = $('#yieldIn'); i.focus(); } }
   if (ev.target.id === 'ratioIn') { const v = parseFloat(ev.target.value); if (v > 0) { cur().ratio = v; const el = $('#sheet'), y = el.scrollTop; renderSheet(); el.scrollTop = y; const i = $('#ratioIn'); i.focus(); i.setSelectionRange?.(99, 99); } }
 });
 document.addEventListener('change', ev => {
