@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1d1a16">
+<meta name="theme-color" content="#1a1a1a">
 <!-- 個人用：検索エンジンに載せない・URLを外部に渡さない -->
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
@@ -13,16 +13,11 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
-  --bg:#f6f3ee;--surface:#fff;--surface2:#efeae2;--ink:#1d1a16;--ink2:#6b645b;--line:#e1dacf;
-  --gold:#a8792a;--gold-soft:#f3e8d2;--red:#c0392b;--red-soft:#fbe5e1;--green:#2e7d4f;--green-soft:#e1f2e7;
-  --blue:#2f5f8f;--shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.05);
-  --tabh:62px;--headh:52px;
+  --bg:#f7f5f1;--surface:#fff;--surface2:#eeebe5;--ink:#1a1a1a;--ink2:#77736c;--line:#e3dfd8;
+  --gold:#a8792a;--gold-soft:#f6efe2;--red:#c0392b;--red-soft:#fbe9e6;--green:#2e7d4f;--green-soft:#e6f3ea;
+  --blue:#2f5f8f;--shadow:0 1px 2px rgba(0,0,0,.05),0 2px 6px rgba(0,0,0,.04);
+  --tabh:62px;--headh:52px;--serif:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#141210;--surface:#1f1c19;--surface2:#2a2622;--ink:#f1ece4;--ink2:#a59d92;--line:#36312b;
-  --gold:#d8aa55;--gold-soft:#3a2f1c;--red:#ef7766;--red-soft:#3d211d;--green:#6fcf97;--green-soft:#1b3326;--blue:#8ab4e0;
-  --shadow:none;
-}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;overscroll-behavior-y:contain}
@@ -43,7 +38,6 @@ nav.tabs .dot{position:absolute;top:8px;left:calc(50% + 8px);min-width:18px;heig
 .card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line)}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;min-height:42px;font-weight:600}
 .btn.pri{background:var(--gold);border-color:var(--gold);color:#fff}
-@media (prefers-color-scheme:dark){.btn.pri{color:#1d1a16}}
 .btn.danger{color:var(--red);border-color:var(--red)}
 .btn.sm{min-height:34px;padding:5px 10px;font-size:13px}
 .btn.block{width:100%}
@@ -159,6 +153,36 @@ table.grid td.me{background:var(--gold-soft)}
 .fab{position:fixed;right:16px;bottom:calc(var(--tabh) + 16px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--gold);color:#fff;border:0;box-shadow:0 6px 18px rgba(0,0,0,.25);display:grid;place-items:center;z-index:15}
 .fab svg{width:28px;height:28px}
 img.full{width:100%;border-radius:12px}
+
+/* ===== 白基調テーマ：生成りの背景＋白カード＋黒（ロゴ）＋少しの金 ===== */
+header.top{background:#1a1a1a;color:#fff}
+header.top h1{font-family:var(--serif);font-weight:600;letter-spacing:.12em;display:flex;align-items:center}
+header.top h1 b{display:inline-block;width:32px;height:32px;border-radius:50%;background:url(icon-192.png) center/cover;font-size:0;margin-right:10px;box-shadow:0 0 0 1.5px var(--gold)}
+#wl{color:#fff}
+#sheet .sh{background:#1a1a1a;color:#fff}
+#sheet .sh h2{font-family:var(--serif);letter-spacing:.05em}
+.sh .btn{background:#fff;border-color:#fff;color:#1a1a1a}
+.btn{border-radius:999px}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.card{border-color:transparent}
+nav.tabs{background:#fff}
+nav.tabs button.on{color:var(--gold)}
+nav.tabs button.on::before{content:"";position:absolute;top:0;left:32%;right:32%;height:2px;background:var(--gold);border-radius:2px}
+.datebar .d b{font-family:var(--serif);letter-spacing:.06em}
+.datebar .navb{border-radius:50%;width:44px;height:44px;border-color:transparent;box-shadow:var(--shadow)}
+.shift.me{background:#faf5ea;box-shadow:inset 3px 0 0 var(--gold)}
+.shift.me .n b{color:#8a6220}
+.timeline i{background:var(--ink);opacity:.8}
+.shift.me .timeline i{background:var(--gold);opacity:1}
+.badge.gold{background:var(--ink);color:#fff}
+.bar i{background:var(--ink)}
+.fab{background:var(--ink);border-radius:50%}
+.alert.lo{background:var(--ink)}
+.chip{border-color:transparent;box-shadow:var(--shadow)}
+.chip.on{background:var(--ink);color:#fff}
+input[type=search],input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{border-color:transparent;box-shadow:var(--shadow)}
+.edrow input,.edrow select{box-shadow:none;border-color:var(--line)}
+h3{letter-spacing:.08em}
 </style>
 </head>
 <body>
@@ -505,7 +529,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.2', APP_BUILD = 4;
+const APP_VERSION = 'v1.3', APP_BUILD = 5;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';

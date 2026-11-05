@@ -4,3 +4,5 @@ recipes_import.json
 .claude/
 *.jpg
 *.jpeg
+_sample*
+_compare*
