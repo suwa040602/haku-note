@@ -529,7 +529,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 8;
+const APP_VERSION = 'v1.3', APP_BUILD = 9;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -724,7 +724,7 @@ function viewToday() {
       const on = nowMin >= x.start && nowMin < (x.end ?? x.start);
       const l = (x.start - lo) / (hi - lo) * 100, w = ((x.end ?? x.start + 30) - x.start) / (hi - lo) * 100;
       return `<div class="shift ${isMe(x.name) ? 'me' : ''} ${on ? 'now' : ''}">
-        <div class="n"><b>${esc(x.name)}</b> ${x.dept ? `<span class="badge">${esc(deptLabel(x.dept))}</span>` : ''}
+        <div class="n"><b>${esc(x.name)}</b> ${x.dept ? `<span class="badge${x.support ? ' gold' : ''}">${esc(deptLabel(x.dept))}</span>` : ''}
           <div class="timeline"><i style="left:${l}%;width:${w}%"></i></div></div>
         <div class="t">${fmtMin(x.start)}<span class="muted">〜</span>${x.end != null ? fmtMin(x.end) : '?'}</div></div>`;
     }).join('')}</div>
