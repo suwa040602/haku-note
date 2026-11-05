@@ -529,7 +529,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 6;
+const APP_VERSION = 'v1.3', APP_BUILD = 7;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -701,8 +701,8 @@ function shiftsOn(dateStr) {
   const w = weekFor(dateStr);
   if (!w) return null;
   const rows = [];
+  // PDFに載っている順のまま表示する（並べ替えない）
   for (const s of w.staff) { const sh = s.shifts[dateStr]; if (sh) rows.push({ ...s, ...sh }); }
-  rows.sort((a, b) => a.start - b.start || (a.end ?? 9999) - (b.end ?? 9999));
   return { week: w, rows };
 }
 const isMe = name => S.kv.myName && norm(name) === norm(S.kv.myName);
