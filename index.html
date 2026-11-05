@@ -529,7 +529,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 7;
+const APP_VERSION = 'v1.3', APP_BUILD = 8;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -705,6 +705,8 @@ function shiftsOn(dateStr) {
   for (const s of w.staff) { const sh = s.shifts[dateStr]; if (sh) rows.push({ ...s, ...sh }); }
   return { week: w, rows };
 }
+// 所属は「彦根」「トキシラズ」「草津」のように末尾の「店」を省いて表示する
+const deptLabel = d => String(d).replace(/^箔\s*/, '').replace(/店$/, '');
 const isMe = name => S.kv.myName && norm(name) === norm(S.kv.myName);
 function viewToday() {
   const d = parseYmd(S.day);
@@ -722,7 +724,7 @@ function viewToday() {
       const on = nowMin >= x.start && nowMin < (x.end ?? x.start);
       const l = (x.start - lo) / (hi - lo) * 100, w = ((x.end ?? x.start + 30) - x.start) / (hi - lo) * 100;
       return `<div class="shift ${isMe(x.name) ? 'me' : ''} ${on ? 'now' : ''}">
-        <div class="n"><b>${esc(x.name)}</b> ${x.support ? `<span class="badge gold">応援${x.dept ? ' ' + esc(x.dept) : ''}</span>` : x.dept ? `<span class="badge">${esc(x.dept)}</span>` : ''}
+        <div class="n"><b>${esc(x.name)}</b> ${x.dept ? `<span class="badge">${esc(deptLabel(x.dept))}</span>` : ''}
           <div class="timeline"><i style="left:${l}%;width:${w}%"></i></div></div>
         <div class="t">${fmtMin(x.start)}<span class="muted">〜</span>${x.end != null ? fmtMin(x.end) : '?'}</div></div>`;
     }).join('')}</div>
@@ -1081,7 +1083,7 @@ const SHEETS = {
     const exists = S.shifts.find(w => w.weekStart === r.weekStart);
     const ws = parseYmd(r.weekStart);
     const head = r.dates.map(d => { const x = parseYmd(d); return `<th>${x.getMonth() + 1}/${x.getDate()}<br>${WD[x.getDay()]}</th>`; }).join('');
-    const body = r.staff.map(s => `<tr><td class="${isMe(s.name) ? 'me' : ''}">${s.support ? '＊' : ''}${esc(s.name)}${s.dept ? `<br><span class="xs muted">${esc(s.dept)}</span>` : ''}</td>${r.dates.map(d => { const x = s.shifts[d]; return `<td>${x ? `${fmtMin(x.start)}<br>${x.end != null ? fmtMin(x.end) : '?'}` : '<span class="muted">-</span>'}</td>`; }).join('')}</tr>`).join('');
+    const body = r.staff.map(s => `<tr><td class="${isMe(s.name) ? 'me' : ''}">${esc(s.name)}${s.dept ? `<br><span class="xs muted">${esc(deptLabel(s.dept))}</span>` : ''}</td>${r.dates.map(d => { const x = s.shifts[d]; return `<td>${x ? `${fmtMin(x.start)}<br>${x.end != null ? fmtMin(x.end) : '?'}` : '<span class="muted">-</span>'}</td>`; }).join('')}</tr>`).join('');
     const days = r.dates.filter(d => r.staff.some(s => s.shifts[d])).length;
     return {
       title: 'シフト取り込みの確認',
@@ -1090,7 +1092,7 @@ const SHEETS = {
         ${exists && !sh.viewOnly ? `<div class="info">この週は ${new Date(exists.importedAt).toLocaleString('ja-JP')} に取り込み済みです。保存すると上書きします。</div>` : ''}
         ${r.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('')}
         <div class="scrollx mt"><table class="grid"><thead><tr><th>氏名</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
-        <p class="xs muted">＊＝応援。00:00の退勤は24:00として表示しています。PDFと見比べて違っていれば保存せず戻ってください。</p>
+        <p class="xs muted">00:00の退勤は24:00として表示しています。PDFと見比べて違っていれば保存せず戻ってください。</p>
         ${sh.viewOnly ? '' : `<button class="btn pri block mt" data-act="saveShift">${exists ? '上書き保存' : '保存'}</button>`}`
     };
   },

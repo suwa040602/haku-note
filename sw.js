@@ -1,5 +1,5 @@
 // 箔 Service Worker — index.html の APP_BUILD を上げたらここも上げる
-const CACHE = 'haku-note-b7';
+const CACHE = 'haku-note-b8';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon.png'];
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const PDF_FILES = ['build/pdf.min.js', 'build/pdf.worker.min.js', 'cmaps/UniJIS-UCS2-H.bcmap', 'cmaps/UniJIS-UTF16-H.bcmap', 'cmaps/Adobe-Japan1-UCS2.bcmap', 'cmaps/90ms-RKSJ-H.bcmap'].map(p => PDFJS + p);
