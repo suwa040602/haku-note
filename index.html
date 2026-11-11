@@ -70,6 +70,20 @@ label.f>input,label.f>select,label.f>textarea{margin-top:4px;color:var(--ink);fo
 .shift:last-child{border-bottom:0}
 .shift .t{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;font-size:16px}
 .shift .n{flex:1;min-width:0}
+.seatmap{display:block;width:100%;height:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:4px 0 6px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.seatmap .wall{fill:none;stroke:var(--ink2);stroke-width:.6;opacity:.55}
+.seatmap .counter{fill:var(--surface2);stroke:var(--line)}
+.seatmap .lbl{font-size:3.6px;fill:var(--ink2);text-anchor:middle}
+.seatmap .seat{cursor:pointer}
+.seatmap .seat .hit{fill:transparent}
+.seatmap .seat .s{fill:#fff;stroke:var(--ink);stroke-width:.5}
+.seatmap .seat text{font-size:4.6px;font-weight:700;text-anchor:middle;fill:var(--ink);pointer-events:none}
+.seatmap .seat.sel .s{fill:var(--gold);stroke:var(--gold)}
+.seatmap .seat.sel text{fill:#fff}
+.seatmap .seat.used{cursor:default}
+.seatmap .seat.used .s{fill:var(--surface2);stroke:var(--line)}
+.seatmap .seat.used text{fill:#b9b4ab}
+.seatsel{min-height:1.6em}
 .nextme{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;margin-bottom:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .nextme .grow{flex:1;font-variant-numeric:tabular-nums}
 .shift .n b{font-weight:600}
@@ -531,7 +545,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 12;
+const APP_VERSION = 'v1.3', APP_BUILD = 13;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -823,6 +837,37 @@ async function pruneOldShifts() {
   if (old.length) S.shifts = S.shifts.filter(w => !old.includes(w));
 }
 
+/* ========== 席の配置図 ========== */
+/* 手書きの配置図をもとにした座標（単位は図の1/10px）。cap は席の定員 */
+const SEATS = [
+  ...[[1, 79, 111], [2, 78, 99], [3, 91, 88], [4, 103.5, 88], [5, 113.5, 88], [6, 124, 88], [7, 134, 88], [8, 143.5, 88], [9, 153, 88]]
+    .map(([no, cx, cy]) => ({ no: String(no), cx, cy, r: 4.6, cap: 1, kind: 'カウンター' })),
+  ...[[11, 39, 97, 9, 18, 4], [12, 56, 98, 9, 17, 4], [13, 44, 52, 11, 25, 6], [14, 65, 53, 10, 18, 4], [15, 83, 54, 11, 17, 4],
+    [16, 116, 54, 9, 17, 4], [17, 136, 55, 9, 16, 4], [18, 25, 33, 8, 9, 2], [19, 24, 15, 8, 9, 2]]
+    .map(([no, x, y, w, h, cap]) => ({ no: String(no), x, y, w, h, cap, kind: 'テーブル' })),
+  ...[[21, 56, 30, 9, 16], [22, 56, 8, 9, 17], [23, 75, 30, 9, 16], [24, 77, 8, 8, 16], [25, 127, 28, 9, 16], [26, 127, 8, 8, 16]]
+    .map(([no, x, y, w, h]) => ({ no: String(no), x, y, w, h, cap: 6, kind: '個室' })),
+];
+const seatByNo = no => SEATS.find(x => x.no === no);
+const seatsOf = no => String(no || '').split('・').filter(Boolean);
+function usedSeats() { return new Set(S.tables.flatMap(t => seatsOf(t.no))); }
+function seatMap(sel) {
+  const used = usedSeats();
+  const g = SEATS.map(x => {
+    const cls = `seat ${sel.includes(x.no) ? 'sel' : ''} ${used.has(x.no) ? 'used' : ''}`;
+    const act = used.has(x.no) ? '' : `data-act="seat" data-s="${x.no}"`;
+    if (x.r) return `<g class="${cls}" ${act}><circle class="hit" cx="${x.cx}" cy="${x.cy}" r="5.2"/><circle class="s" cx="${x.cx}" cy="${x.cy}" r="${x.r}"/><text x="${x.cx}" y="${x.cy + 1.6}">${x.no}</text></g>`;
+    return `<g class="${cls}" ${act}><rect class="s" x="${x.x}" y="${x.y}" width="${x.w}" height="${x.h}" rx="1.4"/><text x="${x.x + x.w / 2}" y="${x.y + x.h / 2 + 1.6}">${x.no}</text></g>`;
+  }).join('');
+  return `<svg class="seatmap" viewBox="14 4 158 116" role="group" aria-label="席の配置図">
+    <g class="wall"><polyline points="18,3 18,89"/><polyline points="18,98 18,119"/><path d="M18,89 A8,8 0 0 0 11,97"/>
+      <polyline points="48,7 49,48 94,48 94,6"/><polyline points="114,7 114,47 172,47"/><polyline points="168,56 168,109"/><polyline points="168,56 172,56"/></g>
+    <rect class="counter" x="85" y="94" width="74" height="20" rx="1"/>
+    <text class="lbl" x="122" y="106">カウンター</text><text class="lbl" x="21" y="95" text-anchor="start">入口</text>
+    <text class="lbl" x="170" y="72" writing-mode="tb">キッチン</text>
+    ${g}</svg>`;
+}
+
 /* ========== 進行（卓） ========== */
 const pausedExtra = (t, now = Date.now()) => t.pausedAt ? (now - t.pausedAt) / 60000 : 0;
 const itemDue = (t, i, now) => t.startAt + (t.items[i].offsetMin + t.shiftMin + pausedExtra(t, now)) * 60000;
@@ -1096,7 +1141,9 @@ const SHEETS = {
     const d = sh.draft;
     return {
       title: '卓を追加',
-      body: `<label class="f">卓番号・席名<input type="text" id="t_no" value="${esc(d.no)}" placeholder="例：3 / カウンター2"></label>
+      body: `<div class="f">席（タップで選択・複数可）</div>
+        ${seatMap(d.seats)}
+        <div class="small seatsel">${d.seats.length ? `選択中：<b>${d.seats.join('・')}</b> <span class="muted">（${d.seats.map(n => { const x = seatByNo(n); return x.kind === 'カウンター' ? 'カウンター' : `${x.kind}${x.cap}名`; }).filter((v, i, a) => a.indexOf(v) === i).join('・')}）</span>` : '<span class="muted">席を選んでください（グレーは進行中）</span>'}</div>
         <label class="f">コース<select id="t_course">${S.courses.map(c => `<option value="${c.id}" ${d.courseId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
         <div class="f">人数</div><div class="stepper"><button data-act="tppl" data-d="-1">−</button><span class="v" id="t_ppl">${d.people}<span class="small">名</span></span><button data-act="tppl" data-d="1">＋</button></div>
         ${S.courses.length ? '' : '<div class="warn">コースが未登録です。設定から一括取り込みかコース追加をしてください</div>'}
@@ -1232,6 +1279,7 @@ function collectRecipe(sh) {
   d.steps = $('#e_steps').value.split('\n').map(s => s.trim()).filter(Boolean);
   d.memo = $('#e_memo').value.trim();
 }
+function keepAddDraft(sh) { sh.draft.courseId = $('#t_course').value; sh.draft.time = $('#t_time').value; }
 function collectCourse(sh) {
   const c = sh.draft;
   c.name = $('#c_name').value.trim();
@@ -1336,15 +1384,23 @@ const A = {
   saveName: async () => { await setKv('myName', $('#myName').value.trim()); toast('保存しました'); },
 
   addTable: () => {
-    const used = new Set(S.tables.map(t => t.no));
-    let n = 1; while (used.has(String(n))) n++;
     const d = new Date();
-    pushSheet({ type: 'addTable', draft: { no: String(n), courseId: S.kv.lastCourse && courseById(S.kv.lastCourse) ? S.kv.lastCourse : S.courses[0]?.id, people: 2, time: `${pad(d.getHours())}:${pad(d.getMinutes())}` } });
+    pushSheet({ type: 'addTable', draft: { seats: [], courseId: S.kv.lastCourse && courseById(S.kv.lastCourse) ? S.kv.lastCourse : S.courses[0]?.id, people: 2, time: `${pad(d.getHours())}:${pad(d.getMinutes())}` } });
   },
-  tppl: el => { const sh = cur(); sh.draft.no = $('#t_no').value; sh.draft.courseId = $('#t_course').value; sh.draft.time = $('#t_time').value; sh.draft.people = Math.max(1, sh.draft.people + +el.dataset.d); renderSheet(); },
+  seat: el => {
+    const sh = cur(); keepAddDraft(sh);
+    const no = el.dataset.s, ss = sh.draft.seats;
+    const i = ss.indexOf(no); if (i >= 0) ss.splice(i, 1); else ss.push(no);
+    ss.sort((a, b) => a - b);
+    // 人数の初期値は選んだ席の定員の合計
+    if (ss.length) sh.draft.people = ss.reduce((n, s) => n + (seatByNo(s)?.cap || 1), 0);
+    renderSheet();
+  },
+  tppl: el => { const sh = cur(); sh.draft.courseId = $('#t_course').value; sh.draft.time = $('#t_time').value; sh.draft.people = Math.max(1, sh.draft.people + +el.dataset.d); renderSheet(); },
   startTable: async el => {
     unlockAudio();
     const sh = cur(); const c = courseById($('#t_course').value); if (!c) return;
+    if (!sh.draft.seats.length) { toast('席を選んでください'); return; }
     let startAt = Date.now();
     if (el.dataset.mode === 'time') {
       const [h, m] = ($('#t_time').value || '').split(':').map(Number);
@@ -1354,7 +1410,7 @@ const A = {
       startAt = d.getTime();
     }
     const t = {
-      id: uid('t'), no: $('#t_no').value.trim() || '?', courseId: c.id, courseName: c.name, people: sh.draft.people, startAt,
+      id: uid('t'), no: sh.draft.seats.join('・'), courseId: c.id, courseName: c.name, people: sh.draft.people, startAt,
       items: c.items.map(it => ({ ...it })), durationMin: c.durationMin, lastOrderMin: c.lastOrderMin, serveByMin: serveByOf(c),
       shiftMin: 0, pausedAt: null, served: {}, notified: {}, createdAt: Date.now(),
     };
