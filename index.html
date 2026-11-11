@@ -545,7 +545,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 13;
+const APP_VERSION = 'v1.3', APP_BUILD = 14;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -839,14 +839,16 @@ async function pruneOldShifts() {
 
 /* ========== 席の配置図 ========== */
 /* 手書きの配置図をもとにした座標（単位は図の1/10px）。cap は席の定員 */
+/* 大きさは定員で統一：カウンター丸 / 2名 9×9 / 4名 10×17 / 6名テーブル 10×24 / 個室 10×19。行ごとに中心をそろえる */
+const T2 = [9, 9], T4 = [10, 17], T6 = [10, 24], P6 = [10, 19];
 const SEATS = [
-  ...[[1, 79, 111], [2, 78, 99], [3, 91, 88], [4, 103.5, 88], [5, 113.5, 88], [6, 124, 88], [7, 134, 88], [8, 143.5, 88], [9, 153, 88]]
-    .map(([no, cx, cy]) => ({ no: String(no), cx, cy, r: 4.6, cap: 1, kind: 'カウンター' })),
-  ...[[11, 39, 97, 9, 18, 4], [12, 56, 98, 9, 17, 4], [13, 44, 52, 11, 25, 6], [14, 65, 53, 10, 18, 4], [15, 83, 54, 11, 17, 4],
-    [16, 116, 54, 9, 17, 4], [17, 136, 55, 9, 16, 4], [18, 25, 33, 8, 9, 2], [19, 24, 15, 8, 9, 2]]
-    .map(([no, x, y, w, h, cap]) => ({ no: String(no), x, y, w, h, cap, kind: 'テーブル' })),
-  ...[[21, 56, 30, 9, 16], [22, 56, 8, 9, 17], [23, 75, 30, 9, 16], [24, 77, 8, 8, 16], [25, 127, 28, 9, 16], [26, 127, 8, 8, 16]]
-    .map(([no, x, y, w, h]) => ({ no: String(no), x, y, w, h, cap: 6, kind: '個室' })),
+  ...[[1, 79, 109], [2, 79, 99], [3, 92, 87], [4, 102, 87], [5, 112, 87], [6, 122, 87], [7, 132, 87], [8, 142, 87], [9, 152, 87]]
+    .map(([no, cx, cy]) => ({ no: String(no), cx, cy, r: 4.4, cap: 1, kind: 'カウンター' })),
+  ...[[19, 25, 12, T2, 2], [18, 25, 33, T2, 2], [13, 44, 56, T6, 6], [14, 63, 59.5, T4, 4], [15, 82, 59.5, T4, 4],
+    [16, 117, 59.5, T4, 4], [17, 136, 59.5, T4, 4], [11, 40, 96, T4, 4], [12, 58, 96, T4, 4]]
+    .map(([no, x, y, [w, h], cap]) => ({ no: String(no), x, y, w, h, cap, kind: 'テーブル' })),
+  ...[[22, 57, 7], [24, 79, 7], [21, 57, 28], [23, 79, 28], [26, 128, 7], [25, 128, 28]]
+    .map(([no, x, y]) => ({ no: String(no), x, y, w: P6[0], h: P6[1], cap: 6, kind: '個室' })),
 ];
 const seatByNo = no => SEATS.find(x => x.no === no);
 const seatsOf = no => String(no || '').split('・').filter(Boolean);
@@ -861,10 +863,10 @@ function seatMap(sel) {
   }).join('');
   return `<svg class="seatmap" viewBox="14 4 158 116" role="group" aria-label="席の配置図">
     <g class="wall"><polyline points="18,3 18,89"/><polyline points="18,98 18,119"/><path d="M18,89 A8,8 0 0 0 11,97"/>
-      <polyline points="48,7 49,48 94,48 94,6"/><polyline points="114,7 114,47 172,47"/><polyline points="168,56 168,109"/><polyline points="168,56 172,56"/></g>
-    <rect class="counter" x="85" y="94" width="74" height="20" rx="1"/>
-    <text class="lbl" x="122" y="106">カウンター</text><text class="lbl" x="21" y="95" text-anchor="start">入口</text>
-    <text class="lbl" x="170" y="72" writing-mode="tb">キッチン</text>
+      <polyline points="48,4 48,50 98,50 98,4"/><polyline points="114,4 114,50 172,50"/><polyline points="166,114 166,56 172,56"/></g>
+    <rect class="counter" x="86" y="93" width="72" height="21" rx="1.4"/>
+    <text class="lbl" x="122" y="105">カウンター</text><text class="lbl" x="21" y="95" text-anchor="start">入口</text>
+    <text class="lbl" x="169" y="74" writing-mode="tb">キッチン</text>
     ${g}</svg>`;
 }
 
