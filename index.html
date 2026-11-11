@@ -545,7 +545,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 14;
+const APP_VERSION = 'v1.3', APP_BUILD = 15;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -843,7 +843,7 @@ async function pruneOldShifts() {
 const T2 = [9, 9], T4 = [10, 17], T6 = [10, 24], P6 = [10, 19];
 const SEATS = [
   ...[[1, 79, 109], [2, 79, 99], [3, 92, 87], [4, 102, 87], [5, 112, 87], [6, 122, 87], [7, 132, 87], [8, 142, 87], [9, 152, 87]]
-    .map(([no, cx, cy]) => ({ no: String(no), cx, cy, r: 4.4, cap: 1, kind: 'カウンター' })),
+    .map(([no, cx, cy]) => ({ no: String(no), cx, cy, r: 4.7, cap: 1, kind: 'カウンター' })),
   ...[[19, 25, 12, T2, 2], [18, 25, 33, T2, 2], [13, 44, 56, T6, 6], [14, 63, 59.5, T4, 4], [15, 82, 59.5, T4, 4],
     [16, 117, 59.5, T4, 4], [17, 136, 59.5, T4, 4], [11, 40, 96, T4, 4], [12, 58, 96, T4, 4]]
     .map(([no, x, y, [w, h], cap]) => ({ no: String(no), x, y, w, h, cap, kind: 'テーブル' })),
@@ -858,16 +858,13 @@ function seatMap(sel) {
   const g = SEATS.map(x => {
     const cls = `seat ${sel.includes(x.no) ? 'sel' : ''} ${used.has(x.no) ? 'used' : ''}`;
     const act = used.has(x.no) ? '' : `data-act="seat" data-s="${x.no}"`;
-    if (x.r) return `<g class="${cls}" ${act}><circle class="hit" cx="${x.cx}" cy="${x.cy}" r="5.2"/><circle class="s" cx="${x.cx}" cy="${x.cy}" r="${x.r}"/><text x="${x.cx}" y="${x.cy + 1.6}">${x.no}</text></g>`;
+    if (x.r) return `<g class="${cls}" ${act}><circle class="hit" cx="${x.cx}" cy="${x.cy}" r="5"/><circle class="s" cx="${x.cx}" cy="${x.cy}" r="${x.r}"/><text x="${x.cx}" y="${x.cy + 1.6}">${x.no}</text></g>`;
     return `<g class="${cls}" ${act}><rect class="s" x="${x.x}" y="${x.y}" width="${x.w}" height="${x.h}" rx="1.4"/><text x="${x.x + x.w / 2}" y="${x.y + x.h / 2 + 1.6}">${x.no}</text></g>`;
   }).join('');
-  return `<svg class="seatmap" viewBox="14 4 158 116" role="group" aria-label="席の配置図">
-    <g class="wall"><polyline points="18,3 18,89"/><polyline points="18,98 18,119"/><path d="M18,89 A8,8 0 0 0 11,97"/>
-      <polyline points="48,4 48,50 98,50 98,4"/><polyline points="114,4 114,50 172,50"/><polyline points="166,114 166,56 172,56"/></g>
+  return `<svg class="seatmap" viewBox="21 3 141 114" role="group" aria-label="席の配置図">
+    <g class="wall"><polyline points="48,3 48,50 98,50 98,3"/><polyline points="114,3 114,50 162,50"/></g>
     <rect class="counter" x="86" y="93" width="72" height="21" rx="1.4"/>
-    <text class="lbl" x="122" y="105">カウンター</text><text class="lbl" x="21" y="95" text-anchor="start">入口</text>
-    <text class="lbl" x="169" y="74" writing-mode="tb">キッチン</text>
-    ${g}</svg>`;
+    <text class="lbl" x="122" y="105">カウンター</text>    ${g}</svg>`;
 }
 
 /* ========== 進行（卓） ========== */
