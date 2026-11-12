@@ -1,5 +1,5 @@
 // 箔 Service Worker — index.html の APP_BUILD を上げたらここも上げる
-const CACHE = 'haku-note-b15';
+const CACHE = 'haku-note-b16';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon.png'];
 const SHARE = 'haku-share'; // 共有で受け取ったPDFの一時置き場
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
