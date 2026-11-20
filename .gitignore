@@ -7,3 +7,5 @@ recipes_import.json
 _sample*
 _compare*
 recipes_*.json
+.haku-key
+data/*.json

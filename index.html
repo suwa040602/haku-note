@@ -56,7 +56,7 @@ h3{font-size:14px;margin:16px 0 6px;color:var(--ink2);font-weight:600}
 .badge.red{background:var(--red-soft);color:var(--red)}
 .badge.green{background:var(--green-soft);color:var(--green)}
 .empty{text-align:center;color:var(--ink2);padding:36px 12px}
-input[type=text],input[type=number],input[type=search],input[type=date],input[type=time],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-height:42px}
+input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],input[type=time],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-height:42px}
 textarea{min-height:110px;resize:vertical}
 label.f{display:block;margin-top:12px;font-size:13px;color:var(--ink2);font-weight:600}
 label.f>input,label.f>select,label.f>textarea{margin-top:4px;color:var(--ink);font-weight:400}
@@ -196,7 +196,7 @@ nav.tabs button.on::before{content:"";position:absolute;top:0;left:32%;right:32%
 .alert.lo{background:var(--ink)}
 .chip{border-color:transparent;box-shadow:var(--shadow)}
 .chip.on{background:var(--ink);color:#fff}
-input[type=search],input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{border-color:transparent;box-shadow:var(--shadow)}
+input[type=search],input[type=text],input[type=password],input[type=number],input[type=date],input[type=time],select,textarea{border-color:transparent;box-shadow:var(--shadow)}
 .edrow input,.edrow select{box-shadow:none;border-color:var(--line)}
 h3{letter-spacing:.08em}
 </style>
@@ -545,7 +545,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 17;
+const APP_VERSION = 'v1.3', APP_BUILD = 18;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -606,8 +606,8 @@ const setKv = (k, v) => { S.kv[k] = v; return DB.put('kv', { k, v }); };
 const recipeById = id => S.recipes.find(r => r.id === id);
 const courseById = id => S.courses.find(c => c.id === id);
 function upsert(list, obj) { const i = list.findIndex(x => x.id === obj.id); if (i >= 0) list[i] = obj; else list.push(obj); }
-async function saveRecipe(r) { r.updatedAt = Date.now(); upsert(S.recipes, r); await DB.put('recipes', r); }
-async function saveCourse(c) { upsert(S.courses, c); await DB.put('courses', c); }
+async function saveRecipe(r) { r.updatedAt = Date.now(); upsert(S.recipes, r); await DB.put('recipes', r); scheduleSync(); }
+async function saveCourse(c) { c.updatedAt = Date.now(); upsert(S.courses, c); await DB.put('courses', c); scheduleSync(); }
 async function saveTable(t) { upsert(S.tables, t); await DB.put('tables', t); }
 
 function toast(msg, ms = 2200) {
@@ -837,6 +837,118 @@ async function pruneOldShifts() {
   for (const w of old) await DB.del('shifts', w.weekStart);
   if (old.length) S.shifts = S.shifts.filter(w => !old.includes(w));
 }
+
+/* ========== レシピ・コースの元データ（暗号化してGitHubに置く）との同期 ==========
+   ・鍵（S.kv.dataKey）がないと読めない。鍵は「#k=…」付きのリンクを開いたときにこの端末にだけ保存する
+   ・トークン（S.kv.ghToken）があればGitHub APIで読み書き、なければ公開ページから読むだけ
+   ・項目ごとに updatedAt が新しい方を採用。削除は tombs（削除時刻）で伝える。写真は端末内だけ */
+const REPO = 'suwa040602/haku-note', DATA_PATH = 'data/recipes.enc';
+const b64enc = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64urlDec = s => b64dec(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4));
+const SY = { busy: false, err: '', pending: false, last: 0 };
+async function dataKey() { return crypto.subtle.importKey('raw', b64urlDec(S.kv.dataKey), 'AES-GCM', false, ['encrypt', 'decrypt']); }
+async function encDoc(doc) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await dataKey(), new TextEncoder().encode(JSON.stringify(doc))));
+  return JSON.stringify({ v: 1, iv: b64enc(iv), ct: b64enc(ct) });
+}
+async function decDoc(text) {
+  const o = JSON.parse(text);
+  try {
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64dec(o.iv) }, await dataKey(), b64dec(o.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  } catch (e) { throw new Error('鍵が合わないため元データを読めません'); }
+}
+const ghHeaders = () => ({ Authorization: `Bearer ${S.kv.ghToken}`, Accept: 'application/vnd.github+json' });
+async function fetchRemote() {
+  if (S.kv.ghToken) {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}?ref=main&t=${Date.now()}`, { headers: ghHeaders(), cache: 'no-store' });
+    if (r.status === 404) return { doc: null, sha: null };
+    if (r.status === 401 || r.status === 403) throw new Error('トークンが無効か、権限が足りません');
+    if (!r.ok) throw new Error(`GitHubから読めません（${r.status}）`);
+    const j = await r.json();
+    return { doc: await decDoc(atob(j.content.replace(/\s/g, ''))), sha: j.sha };
+  }
+  const r = await fetch(`${DATA_PATH}?t=${Date.now()}`, { cache: 'no-store' });
+  if (!r.ok) return { doc: null, sha: null };
+  return { doc: await decDoc(await r.text()), sha: null };
+}
+async function pushRemote(doc, sha) {
+  const body = { message: 'レシピを更新（アプリから）', content: btoa(await encDoc(doc)), branch: 'main' };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}`, { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (r.status === 409 || r.status === 422) return false; // 他で更新された → 読み直してやり直す
+  if (r.status === 401 || r.status === 403) throw new Error('トークンが無効か、書き込み権限がありません');
+  if (!r.ok) throw new Error(`GitHubに書き込めません（${r.status}）`);
+  return true;
+}
+const stripPhotos = r => { const { photos, ...x } = r; return x; };
+async function syncData() {
+  if (!S.kv.dataKey || SY.busy || !navigator.onLine) return;
+  SY.busy = true; SY.err = ''; refreshSyncUi();
+  let changed = false;
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { doc, sha } = await fetchRemote();
+      // トークンなしで元データがまだ無いときは、何もしない（読み込みのみ）
+      if (!doc && !S.kv.ghToken) break;
+      const rem = doc || { recipes: [], courses: [], deleted: {} };
+      const remDel = rem.deleted || {};
+      const tomb = { ...remDel };
+      for (const [id, ts] of Object.entries(S.kv.tombs || {})) tomb[id] = Math.max(tomb[id] || 0, ts);
+      let needPush = !doc || Object.keys(tomb).some(id => !remDel[id]);
+      for (const [store, list, norm, remList] of [['recipes', S.recipes, normRecipe, rem.recipes || []], ['courses', S.courses, normCourse, rem.courses || []]]) {
+        const ids = new Set([...list.map(x => x.id), ...remList.map(x => x.id)]);
+        for (const id of ids) {
+          const L = list.find(x => x.id === id), R = remList.find(x => x.id === id);
+          const lt = L ? (+L.updatedAt || 0) : -1, rt = R ? (+R.updatedAt || 0) : -1;
+          if (tomb[id] && tomb[id] >= Math.max(lt, rt)) { // 削除の方が新しい
+            if (L) { list.splice(list.indexOf(L), 1); await DB.del(store, id); changed = true; }
+            if (R) needPush = true;
+            continue;
+          }
+          if (R && rt > lt) {
+            const n = norm({ ...R, photos: L?.photos || [] }); n.updatedAt = rt;
+            upsert(list, n); await DB.put(store, n); changed = true;
+          } else if (L && lt > rt) needPush = true;
+        }
+      }
+      await setKv('tombs', tomb);
+      if (needPush && S.kv.ghToken) {
+        const out = { v: 1, updatedAt: Date.now(), recipes: S.recipes.map(stripPhotos), courses: S.courses, deleted: tomb };
+        if (!(await pushRemote(out, sha))) continue;
+      }
+      SY.pending = needPush && !S.kv.ghToken;
+      SY.last = Date.now(); await setKv('lastSync', SY.last);
+      break;
+    }
+  } catch (e) { console.error(e); SY.err = e.message || String(e); }
+  SY.busy = false;
+  if (changed && !S.sheets.length) render();
+  refreshSyncUi();
+}
+let syncTimer = null;
+function scheduleSync(ms = 2500) { clearTimeout(syncTimer); syncTimer = setTimeout(syncData, ms); }
+async function tombstone(id) { const t = { ...(S.kv.tombs || {}) }; t[id] = Date.now(); await setKv('tombs', t); scheduleSync(); }
+function syncStatus() {
+  if (!S.kv.dataKey) return '鍵が未設定です。お渡しした「鍵のリンク」をこの端末で開いてください';
+  if (SY.busy) return '同期中…';
+  if (SY.err) return `エラー：${SY.err}`;
+  const last = SY.last || S.kv.lastSync;
+  const at = last ? new Date(last).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'まだ';
+  if (!S.kv.ghToken) return `読み込みのみ（最終 ${at}）。${SY.pending ? 'この端末の変更はまだ元データに送られていません。' : ''}トークンを入れると、この端末の変更も元データに書き込みます`;
+  return `同期済み（最終 ${at}）`;
+}
+function refreshSyncUi() { const el = document.getElementById('syncStat'); if (el) el.textContent = syncStatus(); }
+function takeKeyLink() {
+  const m = location.hash.match(/^#k=([A-Za-z0-9_-]{43})$/);
+  if (!m) return;
+  history.replaceState(history.state, '', location.pathname + location.search);
+  setKv('dataKey', m[1]).then(() => { toast('レシピの鍵を保存しました'); syncData(); });
+}
+addEventListener('online', () => syncData());
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - SY.last > 60000) syncData(); });
 
 /* ========== 席の配置図 ========== */
 /* 手書きの配置図をもとにした座標（単位は図の1/10px）。cap は席の定員 */
@@ -1227,6 +1339,11 @@ const SHEETS = {
         <h3>コース</h3>
         <div class="card">${S.courses.map(c => `<div class="rrow" data-act="editCourse" data-id="${c.id}"><div class="grow"><b>${esc(c.name)}</b><div class="xs muted">${c.items.length}品・LO ${c.lastOrderMin}分・${c.durationMin}分制</div></div><span class="muted">›</span></div>`).join('') || '<div class="empty small">未登録</div>'}</div>
         <button class="btn block mt" data-act="newCourse">＋ コースを追加</button>
+        <h3>レシピの元データ（同期）</h3>
+        <div class="card sec"><p class="small" id="syncStat">${esc(syncStatus())}</p>
+          ${S.kv.dataKey ? `<div class="row mt"><input type="password" id="ghTok" autocomplete="off" placeholder="${S.kv.ghToken ? 'トークン設定済み（変更するときだけ入力）' : 'github_pat_ から始まるトークン'}" class="grow"><button class="btn" data-act="saveTok">保存</button></div>
+          <div class="row mt"><button class="btn sm" data-act="syncNow">今すぐ同期</button>${S.kv.ghToken ? '<button class="btn sm danger" data-act="delTok">トークンを消す</button>' : ''}</div>` : ''}</div>
+        <p class="xs muted">レシピとコースは元データと自動で同期します。写真とシフトはこの端末の中だけに保存されます。</p>
         <h3>データ</h3>
         <button class="btn block" data-act="pickJson" data-mode="import">一括取り込み（recipes_import.json など）</button>
         <p class="xs muted">同じIDのレシピ・コースは上書き、それ以外は追加されます。</p>
@@ -1235,7 +1352,7 @@ const SHEETS = {
         <h3>取り込み済みのシフト</h3>
         <div class="card">${weeks.map(w => `<div class="rrow"><div class="grow" data-act="weekView" data-w="${w.weekStart}"><b>${w.weekStart.slice(5).replace('-', '/')} の週</b><div class="xs muted">${w.staff.length}人・${esc(w.fileName || '')}</div></div><button class="btn sm danger" data-act="delWeek" data-w="${w.weekStart}">削除</button></div>`).join('') || '<div class="empty small">なし</div>'}</div>
         <p class="xs muted">最終日から8週間たったシフトは自動で削除されます。</p>
-        <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>データはこの端末内にだけ保存されます${persisted ? '（自動削除されない設定）' : ''}</p>`
+        <p class="small muted mt2" style="text-align:center">箔 ${APP_VERSION} (build ${APP_BUILD})<br>この端末のデータ：${persisted ? '自動削除されない設定' : '通常'}</p>`
     };
   },
   editCourse(sh) {
@@ -1309,6 +1426,7 @@ function normCourse(c) {
     id: String(c.id || uid('c')), name: String(c.name || '無題'), price: c.price || null,
     items: (c.items || []).map(it => ({ name: String(it.name || ''), recipeRef: it.recipeRef || null, offsetMin: it.afterCourse || it.offsetMin == null ? null : +it.offsetMin, afterCourse: it.afterCourse ? true : undefined })),
     durationMin: +c.durationMin || 120, lastOrderMin: +c.lastOrderMin || 105, serveByMin: +c.serveByMin || undefined,
+    updatedAt: +c.updatedAt || 0,
   };
   migrateCourse(n); // 出し切り時間のない古いデータ（recipes_import.json など）は100分に合わせる
   return n;
@@ -1321,7 +1439,7 @@ async function importJson(obj, mode) {
     S.shifts = obj.shifts || []; S.tables = obj.tables || [];
     await Promise.all([DB.replaceAll('recipes', S.recipes), DB.replaceAll('courses', S.courses), DB.replaceAll('shifts', S.shifts), DB.replaceAll('tables', S.tables)]);
     for (const [k, v] of Object.entries(obj.kv || {})) await setKv(k, v);
-    toast('復元しました'); return;
+    toast('復元しました'); scheduleSync(); return;
   }
   const rs = (obj.recipes || []).map(normRecipe), cs = (obj.courses || []).map(normCourse);
   if (!rs.length && !cs.length) { alert('レシピ・コースが見つかりません'); return; }
@@ -1331,10 +1449,10 @@ async function importJson(obj, mode) {
   cs.forEach(c => upsert(S.courses, c));
   await DB.putMany('recipes', rs); await DB.putMany('courses', cs);
   if (obj.shifts) { obj.shifts.forEach(w => { const i = S.shifts.findIndex(x => x.weekStart === w.weekStart); if (i >= 0) S.shifts[i] = w; else S.shifts.push(w); }); await DB.putMany('shifts', obj.shifts); }
-  toast(`取り込みました（レシピ${rs.length}・コース${cs.length}）`);
+  toast(`取り込みました（レシピ${rs.length}・コース${cs.length}）`); scheduleSync();
 }
 function exportAll() {
-  const data = { app: 'haku-note-backup', version: APP_VERSION, build: APP_BUILD, exportedAt: new Date().toISOString(), recipes: S.recipes, courses: S.courses, shifts: S.shifts, tables: S.tables, kv: S.kv };
+  const data = { app: 'haku-note-backup', version: APP_VERSION, build: APP_BUILD, exportedAt: new Date().toISOString(), recipes: S.recipes, courses: S.courses, shifts: S.shifts, tables: S.tables, kv: Object.fromEntries(Object.entries(S.kv).filter(([k]) => k !== 'ghToken')) };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `haku-backup-${ymd(new Date())}.json`;
@@ -1491,7 +1609,7 @@ const A = {
   },
   delRecipe: async () => {
     const sh = cur(); if (!confirm(`「${sh.draft.name}」を削除しますか？`)) return;
-    S.recipes = S.recipes.filter(r => r.id !== sh.draft.id); await DB.del('recipes', sh.draft.id);
+    S.recipes = S.recipes.filter(r => r.id !== sh.draft.id); await DB.del('recipes', sh.draft.id); tombstone(sh.draft.id);
     const below = S.sheets[S.sheets.length - 2]; closeSheets(below && below.type === 'recipe' && below.id === sh.draft.id ? 2 : 1);
   },
 
@@ -1508,10 +1626,17 @@ const A = {
   },
   delCourse: async () => {
     const sh = cur(); if (!confirm(`「${sh.draft.name}」を削除しますか？`)) return;
-    S.courses = S.courses.filter(c => c.id !== sh.draft.id); await DB.del('courses', sh.draft.id); closeSheet();
+    S.courses = S.courses.filter(c => c.id !== sh.draft.id); await DB.del('courses', sh.draft.id); tombstone(sh.draft.id); closeSheet();
   },
   pickJson: el => { jsonMode = el.dataset.mode; $('#jsonIn').value = ''; $('#jsonIn').click(); },
   exportAll: () => exportAll(),
+  saveTok: async () => {
+    const v = $('#ghTok').value.trim(); if (!v) return;
+    if (!/^(github_pat_|ghp_)[A-Za-z0-9_]+$/.test(v)) { toast('トークンの形が違います'); return; }
+    await setKv('ghToken', v); SY.err = ''; renderSheet(); toast('トークンを保存しました'); syncData();
+  },
+  delTok: async () => { if (!confirm('この端末からトークンを消しますか？')) return; await setKv('ghToken', ''); renderSheet(); },
+  syncNow: () => syncData(),
 };
 // レシピ画面の一部だけを描き直す（入力欄は触らないのでカーソル位置がそのまま）
 function patchRecipe(ids) {
@@ -1569,7 +1694,9 @@ $('#main').addEventListener('touchend', e => {
   await loadAll();
   await pruneOldShifts();
   keepData();
+  takeKeyLink();
   render();
+  syncData();
   setInterval(tick, 1000);
   takeSharedPdf();
   updateWakeLock();
