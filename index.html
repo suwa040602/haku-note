@@ -545,7 +545,7 @@ const ShiftParser = (() => {
 </script>
 <script>
 'use strict';
-const APP_VERSION = 'v1.3', APP_BUILD = 16;
+const APP_VERSION = 'v1.3', APP_BUILD = 17;
 const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 const CATS = ['コース', '単品', '調味料', '仕込み'];
 const WD = '日月火水木金土';
@@ -644,7 +644,8 @@ function fmtAmount(amount, unit, factor = 1) {
   const v = amount * factor, u = unit || '';
   if (/^(g|ｇ|グラム|ml|mL|ML|cc|ｃｃ|㏄)$/.test(u)) return (v < 10 ? Math.round(v * 2) / 2 : Math.round(v)) + u;
   if (/^(kg|L|l|リットル)$/.test(u)) return +(Math.round(v * 100) / 100) + u;
-  if (/^(大さじ|小さじ|カップ)$/.test(u)) return u + (Math.round(v * 2) / 2);
+  // 1/3・1/2 などの分数で（小さじ1/3 が 0.5 に丸まらないように）
+  if (/^(大さじ|小さじ|カップ)$/.test(u)) return u + fracStr(v);
   if (COUNT_UNITS.test(u)) return fracStr(v) + u;
   return +(Math.round(v * 100) / 100) + u;
 }

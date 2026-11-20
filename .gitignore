@@ -6,3 +6,4 @@ recipes_import.json
 *.jpeg
 _sample*
 _compare*
+recipes_*.json
